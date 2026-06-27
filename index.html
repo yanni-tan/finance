@@ -415,6 +415,60 @@
             padding-top: 12px;
         }
         .goal-actions button { flex: 1; }
+        .goal-pace {
+            font-size: 11px; font-weight: 600; color: var(--label2);
+            background: var(--surface2); border: 1px solid var(--sep);
+            border-radius: 8px; padding: 7px 10px; margin-bottom: 10px;
+        }
+        .goal-pace.behind { color: var(--red); background: var(--red-bg); border-color: transparent; }
+        .goal-pace.ahead  { color: var(--green); background: var(--green-bg); border-color: transparent; }
+
+        /* ── Planning: safe-to-spend ── */
+        .safe-amount { font-size: 46px; font-weight: 300; letter-spacing: -2px; line-height: 1; margin-bottom: 12px; }
+        .safe-amount.neg { color: var(--red); }
+        .safe-formula {
+            display: flex; flex-wrap: wrap; gap: 6px 16px;
+            font-size: 12px; color: var(--label2); margin-bottom: 16px;
+        }
+        .safe-formula b { color: var(--label); font-weight: 600; }
+        .safe-formula .op { color: var(--label3); }
+        .safe-bar { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; display: flex; }
+        .safe-bar-spent { height: 100%; background: linear-gradient(90deg,#f43f6b,#ff7a9c); }
+        .safe-bar-bills { height: 100%; background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+        .safe-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11px; color: var(--label2); }
+        .safe-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
+
+        /* ── Planning: budgets ── */
+        .budget-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--sep); }
+        .budget-row:last-child { border-bottom: none; }
+        .budget-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+        .budget-name { font-size: 13px; font-weight: 500; width: 110px; flex-shrink: 0; }
+        .budget-track { flex: 1; min-width: 80px; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+        .budget-fill { height: 100%; border-radius: 4px; transition: width .3s; }
+        .budget-fill.over { background: var(--red) !important; }
+        .budget-spent { font-size: 12px; color: var(--label2); width: 130px; text-align: right; flex-shrink: 0; white-space: nowrap; }
+        .budget-spent .over { color: var(--red); font-weight: 700; }
+        .budget-input {
+            width: 96px; flex-shrink: 0; padding: 7px 10px;
+            background: var(--surface2); border: 1.5px solid var(--sep);
+            border-radius: 8px; font-size: 13px; font-family: inherit; color: var(--label);
+            outline: none; text-align: right;
+        }
+        .budget-input:focus { border-color: var(--accent); }
+
+        /* ── Planning: recurring / upcoming ── */
+        .recur-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--sep); }
+        .recur-row:last-child { border-bottom: none; }
+        .recur-main { flex: 1; min-width: 0; }
+        .recur-name { font-size: 13px; font-weight: 600; }
+        .recur-sub { font-size: 11px; color: var(--label3); margin-top: 2px; }
+        .recur-due { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+        .recur-due.logged { background: var(--green-bg); color: var(--green); }
+        .recur-due.soon   { background: var(--amber-bg, rgba(245,158,11,0.14)); color: var(--amber); }
+        .recur-due.pending{ background: var(--surface2); color: var(--label2); }
+        .recur-amount { font-size: 13px; font-weight: 700; width: 92px; text-align: right; white-space: nowrap; }
+        .upcoming-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--sep); }
+        .upcoming-row:last-child { border-bottom: none; }
 
         /* ── Category breakdown ── */
         .cat-list { display: flex; flex-direction: column; gap: 10px; }
@@ -643,6 +697,10 @@
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
                 Transactions
             </button>
+            <button class="nav-item" data-page="plan">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><path d="M7 14l4-4 3 3 5-6"/></svg>
+                Plan &amp; Budget
+            </button>
             <div class="nav-section">Wealth</div>
             <button class="nav-item" data-page="accounts">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
@@ -702,6 +760,27 @@
                     <div class="kpi-label">Savings Rate</div>
                     <div class="kpi-value" id="kpiSavings">0%</div>
                     <div class="kpi-sub" id="kpiSavingsSub">Of monthly income</div>
+                </div>
+            </div>
+
+            <div class="content-grid" style="margin-bottom:20px">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Safe to spend</h2>
+                        <div class="card-header-right">
+                            <span class="count-badge" id="safeMonth">This month</span>
+                        </div>
+                    </div>
+                    <div class="card-body" id="safeBody"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Upcoming bills</h2>
+                        <div class="card-header-right">
+                            <button class="row-btn" onclick="switchPage('plan')">Manage →</button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="upcomingBody"></div>
                 </div>
             </div>
 
@@ -825,6 +904,51 @@
                 <button class="btn btn-primary" onclick="openGoalModal()" style="flex: 0">+ New goal</button>
             </div>
             <div id="goalsList"></div>
+        </section>
+
+        <!-- ── Plan & Budget ── -->
+        <section class="page" id="page-plan">
+            <div class="kpi-grid">
+                <div class="kpi-card lime">
+                    <div class="kpi-icon green">✓</div>
+                    <div class="kpi-label">Safe to spend</div>
+                    <div class="kpi-value" id="planSafe">$0</div>
+                    <div class="kpi-sub" id="planSafeSub">Left after bills this month</div>
+                </div>
+                <div class="kpi-card total">
+                    <div class="kpi-icon total">↑</div>
+                    <div class="kpi-label">Expected income</div>
+                    <div class="kpi-value" id="planIncome">$0</div>
+                    <div class="kpi-sub" id="planIncomeSub">Received + recurring</div>
+                </div>
+                <div class="kpi-card peach">
+                    <div class="kpi-icon amber">⊟</div>
+                    <div class="kpi-label">Committed</div>
+                    <div class="kpi-value" id="planCommitted">$0</div>
+                    <div class="kpi-sub" id="planCommittedSub">Spent + upcoming bills</div>
+                </div>
+            </div>
+
+            <div class="content-grid" style="align-items:start">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Monthly budgets</h2>
+                        <div class="card-header-right">
+                            <span class="count-badge" id="budgetTotal">—</span>
+                        </div>
+                    </div>
+                    <div class="card-body" id="budgetList"></div>
+                </div>
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Recurring &amp; bills</h2>
+                        <div class="card-header-right">
+                            <button class="row-btn" onclick="openRecurModal()">+ Add</button>
+                        </div>
+                    </div>
+                    <div class="card-body" id="recurList"></div>
+                </div>
+            </div>
         </section>
     </main>
 
@@ -964,6 +1088,48 @@
         </div>
     </div>
 
+    <!-- ── Recurring Modal ── -->
+    <div class="overlay" id="recurModal">
+        <div class="modal">
+            <div class="modal-hdr">
+                <h2 id="recurModalTitle">Add recurring</h2>
+                <button class="modal-x" onclick="closeModal('recurModal')">×</button>
+            </div>
+            <div class="type-toggle">
+                <button id="recurTypeExpense" class="active expense" onclick="setRecurType('expense')">Bill / Expense</button>
+                <button id="recurTypeIncome" onclick="setRecurType('income')">Income</button>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Amount</label>
+                    <input type="number" class="finput" id="recurAmount" placeholder="0.00" step="0.01" min="0">
+                </div>
+                <div class="fg">
+                    <label>Day of month</label>
+                    <input type="number" class="finput" id="recurDay" placeholder="1" min="1" max="31">
+                </div>
+            </div>
+            <div class="frow">
+                <div class="fg">
+                    <label>Category</label>
+                    <select class="fselect" id="recurCategory"></select>
+                </div>
+                <div class="fg">
+                    <label>Account</label>
+                    <select class="fselect" id="recurAccount"></select>
+                </div>
+            </div>
+            <div class="fg">
+                <label>Name / note</label>
+                <input type="text" class="finput" id="recurNote" placeholder="e.g. Rent, Netflix, Paycheck">
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="closeModal('recurModal')">Cancel</button>
+                <button class="btn btn-primary" id="recurSaveBtn" onclick="saveRecur()">Add recurring</button>
+            </div>
+        </div>
+    </div>
+
     <input type="file" id="importFile" accept=".json" style="display:none">
     <div class="toast" id="toast"></div>
 
@@ -974,6 +1140,8 @@ const DEFAULT_DATA = {
     transactions: [],
     accounts: [],
     goals: [],
+    budgets: {},
+    recurring: [],
     settings: { currency: 'USD', theme: 'dark' }
 };
 const CATEGORIES = {
@@ -1007,6 +1175,8 @@ let txEditId = null;
 let acctEditId = null;
 let goalEditId = null;
 let goalUpdateId = null;
+let recurEditId = null;
+let recurTypeCurrent = 'expense';
 let txTypeCurrent = 'expense';
 let monthFilter = currentMonthKey();
 
@@ -1097,7 +1267,195 @@ function monthChange() {
     };
 }
 
-// ─── Render: Dashboard ───
+// ─── Planning calcs ───
+function daysInMonth(y, m) { return new Date(y, m + 1, 0).getDate(); }
+
+function recurUpcoming(type) {
+    const key = currentMonthKey();
+    return data.recurring.filter(r => r.type === type && r.lastLogged !== key);
+}
+
+function recurNextDate(r) {
+    const now = new Date();
+    let y = now.getFullYear(), m = now.getMonth();
+    if (r.lastLogged === currentMonthKey()) m += 1;          // already logged → next month
+    const day = Math.min(Number(r.dayOfMonth) || 1, daysInMonth(y, m));
+    return new Date(y, m, day);
+}
+
+function safeToSpend() {
+    const txs = txInMonth(currentMonthKey());
+    const incomeActual = sumIncome(txs);
+    const spent = sumExpense(txs);
+    const upcomingIncome = recurUpcoming('income').reduce((s, r) => s + Number(r.amount), 0);
+    const upcomingBills = recurUpcoming('expense').reduce((s, r) => s + Number(r.amount), 0);
+    const expectedIncome = incomeActual + upcomingIncome;
+    return { expectedIncome, incomeActual, upcomingIncome, spent, upcomingBills,
+             safe: expectedIncome - spent - upcomingBills };
+}
+
+function budgetStatus() {
+    const exp = txInMonth(currentMonthKey()).filter(t => t.type === 'expense');
+    const byCat = {};
+    exp.forEach(t => { byCat[t.category] = (byCat[t.category] || 0) + Number(t.amount); });
+    const rows = Object.keys(data.budgets)
+        .filter(c => Number(data.budgets[c]) > 0)
+        .map(c => ({ cat: c, limit: Number(data.budgets[c]), spent: byCat[c] || 0 }))
+        .sort((a, b) => (b.spent / b.limit) - (a.spent / a.limit));
+    return {
+        rows,
+        totalLimit: rows.reduce((s, r) => s + r.limit, 0),
+        totalSpent: rows.reduce((s, r) => s + r.spent, 0),
+        overCount: rows.filter(r => r.spent > r.limit).length
+    };
+}
+
+// ─── Render: Safe-to-spend + upcoming (dashboard) ───
+function renderPlanSummaryDash() {
+    const s = safeToSpend();
+    const safeEl = document.getElementById('safeBody');
+    const incBase = s.expectedIncome || 1;
+    const spentPct = Math.min(100, (s.spent / incBase) * 100);
+    const billsPct = Math.min(100 - spentPct, (s.upcomingBills / incBase) * 100);
+    safeEl.innerHTML = `
+        <div class="safe-amount ${s.safe < 0 ? 'neg' : ''}">${fmt(s.safe)}</div>
+        <div class="safe-formula">
+            <span><b>${fmt(s.expectedIncome)}</b> expected income</span>
+            <span class="op">−</span>
+            <span><b>${fmt(s.spent)}</b> spent</span>
+            <span class="op">−</span>
+            <span><b>${fmt(s.upcomingBills)}</b> bills due</span>
+        </div>
+        <div class="safe-bar">
+            <div class="safe-bar-spent" style="width:${spentPct}%"></div>
+            <div class="safe-bar-bills" style="width:${billsPct}%"></div>
+        </div>
+        <div class="safe-legend">
+            <span><i style="background:#f43f6b"></i>Spent</span>
+            <span><i style="background:#f59e0b"></i>Bills due</span>
+            <span><i style="background:var(--surface2)"></i>Free</span>
+        </div>`;
+
+    const upEl = document.getElementById('upcomingBody');
+    const upcoming = [...recurUpcoming('expense'), ...recurUpcoming('income')]
+        .sort((a, b) => recurNextDate(a) - recurNextDate(b));
+    if (upcoming.length === 0) {
+        upEl.innerHTML = data.recurring.length === 0
+            ? emptyHTML('🔁', 'No recurring items', 'Add rent, subscriptions, or your paycheck to plan ahead.', `<button class="btn btn-primary" onclick="switchPage('plan')" style="flex:0;display:inline-block;margin-top:8px">Set up</button>`)
+            : `<div class="empty" style="padding:24px"><p style="color:var(--label3);font-size:12px">All caught up — everything for this month is logged. ✓</p></div>`;
+        return;
+    }
+    upEl.innerHTML = upcoming.slice(0, 6).map(r => {
+        const d = recurNextDate(r);
+        const days = Math.ceil((d - new Date()) / 86400000);
+        const soon = days <= 5;
+        const sign = r.type === 'income' ? '+' : '−';
+        const cls = r.type === 'income' ? 'pos' : 'neg';
+        return `<div class="upcoming-row">
+            <div>
+                <div class="recur-name">${escapeHTML(r.note || r.category)}</div>
+                <div class="recur-sub">Due ${fmtDate(d)}${soon ? ' · soon' : ''}</div>
+            </div>
+            <div class="${cls}" style="font-weight:700;white-space:nowrap">${sign}${fmt(Number(r.amount))}</div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Render: Plan page ───
+function renderPlan() {
+    const s = safeToSpend();
+    document.getElementById('planSafe').textContent = fmt(s.safe);
+    document.getElementById('planSafe').className = 'kpi-value';
+    document.getElementById('planSafeSub').textContent = s.safe < 0 ? 'Over budget this month' : 'Left after bills this month';
+    document.getElementById('planIncome').textContent = fmt(s.expectedIncome);
+    document.getElementById('planIncomeSub').textContent = `${fmt(s.incomeActual)} received + ${fmt(s.upcomingIncome)} expected`;
+    document.getElementById('planCommitted').textContent = fmt(s.spent + s.upcomingBills);
+    document.getElementById('planCommittedSub').textContent = `${fmt(s.spent)} spent + ${fmt(s.upcomingBills)} bills`;
+
+    renderBudgets();
+    renderRecurring();
+    renderPlanSummaryDash();
+}
+
+function renderBudgets() {
+    const st = budgetStatus();
+    const el = document.getElementById('budgetList');
+    document.getElementById('budgetTotal').textContent =
+        st.totalLimit > 0 ? `${fmt(st.totalSpent)} / ${fmt(st.totalLimit)}` : 'No budgets set';
+
+    el.innerHTML = `<p style="font-size:12px;color:var(--label3);margin-bottom:8px">Set a monthly limit per category. Bars show this month's spending.</p>` +
+        CATEGORIES.expense.map(c => {
+            const limit = Number(data.budgets[c.name]) || 0;
+            const st2 = budgetStatus().rows.find(r => r.cat === c.name);
+            const spent = st2 ? st2.spent : (txInMonth(currentMonthKey()).filter(t => t.type === 'expense' && t.category === c.name).reduce((s, t) => s + Number(t.amount), 0));
+            const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
+            const over = limit > 0 && spent > limit;
+            return `<div class="budget-row">
+                <span class="budget-dot" style="background:${c.color}"></span>
+                <span class="budget-name">${c.name}</span>
+                <div class="budget-track"><div class="budget-fill ${over ? 'over' : ''}" style="width:${pct}%;background:${c.color}"></div></div>
+                <span class="budget-spent">${limit > 0 ? `${fmt(spent)} / <span class="${over ? 'over' : ''}">${fmt(limit)}</span>` : `<span style="color:var(--label3)">${fmt(spent)} spent</span>`}</span>
+                <input type="number" class="budget-input" placeholder="—" min="0" step="10" value="${limit > 0 ? limit : ''}" onchange="setBudget('${c.name}', this.value)">
+            </div>`;
+        }).join('');
+}
+
+function setBudget(cat, val) {
+    const n = parseFloat(val);
+    if (!n || n <= 0) delete data.budgets[cat];
+    else data.budgets[cat] = n;
+    saveData();
+    renderBudgets();
+    renderPlan();
+    renderDashboard();
+}
+
+function renderRecurring() {
+    const el = document.getElementById('recurList');
+    if (data.recurring.length === 0) {
+        el.innerHTML = emptyHTML('🔁', 'No recurring items',
+            'Add rent, subscriptions, salary — anything that repeats monthly.',
+            `<button class="btn btn-primary" onclick="openRecurModal()" style="flex:0;display:inline-block;margin-top:8px">+ Add recurring</button>`);
+        return;
+    }
+    const sorted = [...data.recurring].sort((a, b) => recurNextDate(a) - recurNextDate(b));
+    el.innerHTML = sorted.map(r => {
+        const logged = r.lastLogged === currentMonthKey();
+        const d = recurNextDate(r);
+        const days = Math.ceil((d - new Date()) / 86400000);
+        const dueCls = logged ? 'logged' : (days <= 5 ? 'soon' : 'pending');
+        const dueTxt = logged ? '✓ Logged' : `Due ${fmtDate(d)}`;
+        const sign = r.type === 'income' ? '+' : '−';
+        const cls = r.type === 'income' ? 'pos' : 'neg';
+        return `<div class="recur-row">
+            <div class="recur-main">
+                <div class="recur-name">${escapeHTML(r.note || r.category)}</div>
+                <div class="recur-sub">${r.category} · day ${r.dayOfMonth} · monthly</div>
+            </div>
+            <span class="recur-due ${dueCls}">${dueTxt}</span>
+            <span class="recur-amount ${cls}">${sign}${fmt(Number(r.amount))}</span>
+            <div class="row-actions" style="opacity:1">
+                ${logged ? '' : `<button class="row-btn" onclick="logRecurring('${r.id}')">Log now</button>`}
+                <button class="row-btn" onclick="editRecur('${r.id}')">Edit</button>
+                <button class="row-btn del" onclick="deleteRecur('${r.id}')">Delete</button>
+            </div>
+        </div>`;
+    }).join('');
+}
+
+// ─── Render: Dashboard goal pace handled in goalCardHTML ───
+function goalPaceHTML(g, pct, done, remaining) {
+    if (done) return `<div class="goal-pace ahead">✓ Goal reached — nicely done.</div>`;
+    if (!g.deadline) {
+        return remaining > 0 ? `<div class="goal-pace">${fmt(remaining)} left to save — add a target date to get a monthly plan.</div>` : '';
+    }
+    const now = new Date(), dl = new Date(g.deadline);
+    const monthsLeft = Math.max(1, (dl.getFullYear() - now.getFullYear()) * 12 + (dl.getMonth() - now.getMonth()));
+    const perMonth = remaining / monthsLeft;
+    const overdue = dl < now;
+    if (overdue) return `<div class="goal-pace behind">Past deadline — ${fmt(remaining)} still to go.</div>`;
+    return `<div class="goal-pace">Save <b>${fmt(perMonth)}</b>/mo to reach this in ${monthsLeft} month${monthsLeft === 1 ? '' : 's'}.</div>`;
+}
 function renderDashboard() {
     const ch = monthChange();
     const inc = ch.income.cur, exp = ch.expense.cur;
@@ -1128,6 +1486,7 @@ function renderDashboard() {
 
     renderCatBreakdown();
     renderTrend();
+    renderPlanSummaryDash();
     renderDashGoals();
 
     const hour = new Date().getHours();
@@ -1394,6 +1753,7 @@ function goalCardHTML(g) {
             <span class="goal-target">/ ${fmt(Number(g.target))}</span>
         </div>
         <div class="goal-track"><div class="goal-fill ${done ? 'done' : ''}" style="width:${pct}%"></div></div>
+        ${goalPaceHTML(g, pct, done, remaining)}
         <div class="goal-meta">
             <span>${done ? '✓ Goal reached' : fmt(remaining) + ' to go'}</span>
             ${g.note ? `<span style="opacity:0.7">${escapeHTML(g.note)}</span>` : ''}
@@ -1655,9 +2015,98 @@ function applyGoalUpdate() {
     renderAll();
 }
 
+// ─── Recurring CRUD ───
+function openRecurModal() {
+    recurEditId = null;
+    document.getElementById('recurModalTitle').textContent = 'Add recurring';
+    document.getElementById('recurSaveBtn').textContent = 'Add recurring';
+    setRecurType('expense');
+    document.getElementById('recurAmount').value = '';
+    document.getElementById('recurDay').value = '1';
+    document.getElementById('recurNote').value = '';
+    populateRecurAccount();
+    document.getElementById('recurModal').classList.add('open');
+    document.getElementById('recurAmount').focus();
+}
+
+function editRecur(id) {
+    const r = data.recurring.find(x => x.id === id);
+    if (!r) return;
+    recurEditId = id;
+    document.getElementById('recurModalTitle').textContent = 'Edit recurring';
+    document.getElementById('recurSaveBtn').textContent = 'Save changes';
+    setRecurType(r.type);
+    document.getElementById('recurAmount').value = r.amount;
+    document.getElementById('recurDay').value = r.dayOfMonth;
+    document.getElementById('recurNote').value = r.note || '';
+    populateRecurAccount(r.account);
+    setTimeout(() => { document.getElementById('recurCategory').value = r.category; }, 0);
+    document.getElementById('recurModal').classList.add('open');
+}
+
+function setRecurType(type) {
+    recurTypeCurrent = type;
+    document.getElementById('recurTypeExpense').classList.toggle('active', type === 'expense');
+    document.getElementById('recurTypeIncome').classList.toggle('active', type === 'income');
+    const sel = document.getElementById('recurCategory');
+    sel.innerHTML = CATEGORIES[type].map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+}
+
+function populateRecurAccount(selectedId) {
+    const sel = document.getElementById('recurAccount');
+    if (data.accounts.length === 0) { sel.innerHTML = `<option value="">— No accounts —</option>`; return; }
+    sel.innerHTML = data.accounts.map(a =>
+        `<option value="${a.id}" ${a.id === selectedId ? 'selected' : ''}>${escapeHTML(a.name)}</option>`).join('');
+}
+
+function saveRecur() {
+    const amount = parseFloat(document.getElementById('recurAmount').value);
+    const dayOfMonth = Math.min(31, Math.max(1, parseInt(document.getElementById('recurDay').value) || 1));
+    const category = document.getElementById('recurCategory').value;
+    const account = document.getElementById('recurAccount').value;
+    const note = document.getElementById('recurNote').value.trim();
+    if (!amount || amount <= 0) { toast('Enter a valid amount'); return; }
+
+    if (recurEditId) {
+        const prev = data.recurring.find(x => x.id === recurEditId);
+        const r = { ...prev, type: recurTypeCurrent, amount, dayOfMonth, category, account, note };
+        data.recurring[data.recurring.findIndex(x => x.id === recurEditId)] = r;
+    } else {
+        data.recurring.push({ id: uid(), type: recurTypeCurrent, amount, dayOfMonth, category, account, note, lastLogged: null });
+    }
+    saveData();
+    closeModal('recurModal');
+    toast(recurEditId ? 'Updated' : 'Added');
+    recurEditId = null;
+    renderAll();
+}
+
+function deleteRecur(id) {
+    if (!confirm('Delete this recurring item? (Logged transactions stay.)')) return;
+    data.recurring = data.recurring.filter(x => x.id !== id);
+    saveData();
+    toast('Deleted');
+    renderAll();
+}
+
+function logRecurring(id) {
+    const r = data.recurring.find(x => x.id === id);
+    if (!r) return;
+    const tx = {
+        id: uid(), type: r.type, amount: Number(r.amount),
+        date: recurNextDate(r).toISOString().slice(0, 10),
+        category: r.category, account: r.account, note: r.note || ''
+    };
+    data.transactions.push(tx);
+    adjustAccountBalance(tx, 1);
+    r.lastLogged = currentMonthKey();
+    saveData();
+    toast(`Logged ${fmt(Number(r.amount))}`);
+    renderAll();
+}
+
 // ─── Modals ───
 function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-
 // ─── Nav ───
 function switchPage(page) {
     document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -1666,6 +2115,7 @@ function switchPage(page) {
     const addBtn = document.getElementById('addBtn');
     if (page === 'accounts') { addBtn.textContent = '+ Add account'; addBtn.onclick = openAcctModal; }
     else if (page === 'goals') { addBtn.textContent = '+ New goal'; addBtn.onclick = openGoalModal; }
+    else if (page === 'plan') { addBtn.textContent = '+ Add recurring'; addBtn.onclick = openRecurModal; }
     else { addBtn.textContent = '+ Add transaction'; addBtn.onclick = openTxModal; }
     document.getElementById('sidebar').classList.remove('open');
     renderAll();
@@ -1718,6 +2168,7 @@ function renderAll() {
     renderTransactions();
     renderAccounts();
     renderGoals();
+    renderPlan();
 }
 
 document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
