@@ -10,18 +10,18 @@
     <style>
         :root {
             --sidebar: #ffffff;
-            --sidebar-border: rgba(0,0,0,0.07);
+            --sidebar-border: rgba(15,23,42,0.06);
             --sidebar-text: #6b7280;
-            --sidebar-text-active: #1d2230;
-            --bg: #c4bfb6;
+            --sidebar-text-active: #1a1d27;
+            --bg: #eceef3;
             --surface: #ffffff;
-            --surface2: #ececea;
-            --label: #1d2230;
-            --label2: #5b6370;
-            --label3: #9ca3af;
-            --sep: #e5e5e0;
-            --accent: #d4e84e;
-            --accent-dim: rgba(212,232,78,0.2);
+            --surface2: #f3f4f7;
+            --label: #1a1d27;
+            --label2: #5b6472;
+            --label3: #9aa1ad;
+            --sep: #e8eaef;
+            --accent: #c2dd2e;
+            --accent-dim: rgba(194,221,46,0.22);
             --navy: #1d2230;
             --peach: #fadec9;
             --peach-deep: #f4c9a9;
@@ -37,8 +37,8 @@
             --teal: #14b8a6;
             --radius: 20px;
             --radius-sm: 12px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.08);
-            --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
+            --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 10px 30px rgba(16,24,40,0.07);
+            --shadow-sm: 0 1px 2px rgba(16,24,40,0.05);
             --sidebar-w: 240px;
         }
         [data-theme="dark"] {
@@ -556,6 +556,10 @@
             filter: drop-shadow(0 0 6px rgba(205,255,61,0.6));
         }
         .trend-line.neg { stroke: var(--red); filter: drop-shadow(0 0 6px rgba(239,68,68,0.5)); }
+        [data-theme="light"] .trend-line { stroke: #7faa00; filter: drop-shadow(0 0 4px rgba(127,170,0,0.35)); }
+        [data-theme="light"] .trend-line.neg { stroke: var(--red); }
+        [data-theme="light"] .trend-dot { border-color: #7faa00; box-shadow: 0 0 10px rgba(127,170,0,0.55); }
+        [data-theme="light"] .trend-dot.neg { border-color: var(--red); box-shadow: 0 0 10px rgba(239,68,68,0.5); }
         .trend-dot {
             position: absolute; width: 14px; height: 14px; border-radius: 50%;
             background: #fff; border: 3px solid var(--accent);
