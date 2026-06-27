@@ -106,9 +106,9 @@
             cursor: pointer; width: 100%; text-align: left;
             font-family: inherit; transition: all 0.15s;
         }
-        .nav-item:hover { background: rgba(0,0,0,0.05); color: var(--sidebar-text-active); }
+        .nav-item:hover:not(.active) { background: rgba(0,0,0,0.05); color: var(--sidebar-text-active); }
         .nav-item.active { background: var(--accent); color: var(--navy); font-weight: 600; }
-        [data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,0.05); }
+        [data-theme="dark"] .nav-item:hover:not(.active) { background: rgba(255,255,255,0.05); }
         .nav-icon { width: 16px; flex-shrink: 0; opacity: 0.9; }
         .nav-item.active .nav-icon { opacity: 1; }
 
