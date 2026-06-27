@@ -11,17 +11,21 @@
         :root {
             --sidebar: #ffffff;
             --sidebar-border: rgba(0,0,0,0.07);
-            --sidebar-text: #9ca3af;
-            --sidebar-text-active: #111827;
-            --bg: #ebebe6;
+            --sidebar-text: #6b7280;
+            --sidebar-text-active: #1d2230;
+            --bg: #c4bfb6;
             --surface: #ffffff;
-            --surface2: #f5f5f1;
-            --label: #111827;
-            --label2: #6b7280;
+            --surface2: #ececea;
+            --label: #1d2230;
+            --label2: #5b6370;
             --label3: #9ca3af;
             --sep: #e5e5e0;
-            --accent: #c8ff00;
-            --accent-dim: rgba(200,255,0,0.15);
+            --accent: #d4e84e;
+            --accent-dim: rgba(212,232,78,0.2);
+            --navy: #1d2230;
+            --peach: #fadec9;
+            --peach-deep: #f4c9a9;
+            --orange: #ff6b1a;
             --green: #22c55e;
             --red: #ef4444;
             --green-bg: rgba(34,197,94,0.1);
@@ -33,16 +37,16 @@
             --teal: #14b8a6;
             --radius: 20px;
             --radius-sm: 12px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.07);
+            --shadow: 0 1px 3px rgba(0,0,0,0.03), 0 8px 24px rgba(0,0,0,0.08);
             --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
             --sidebar-w: 240px;
         }
         [data-theme="dark"] {
-            --sidebar:#111827;--sidebar-border:rgba(255,255,255,0.06);--sidebar-text:#6b7280;--sidebar-text-active:#f9fafb;
-            --bg:#0f172a;--surface:#1e293b;--surface2:#263350;--label:#f1f5f9;--label2:#94a3b8;--label3:#475569;
-            --sep:#1e293b;--shadow:0 1px 3px rgba(0,0,0,0.3),0 8px 32px rgba(0,0,0,0.4);
+            --sidebar:#13172a;--sidebar-border:rgba(255,255,255,0.06);--sidebar-text:#7a8294;--sidebar-text-active:#f9fafb;
+            --bg:#0c0f1a;--surface:#1d2230;--surface2:#262b3a;--label:#f1f5f9;--label2:#9aa3b8;--label3:#5b6580;
+            --sep:#262b3a;--shadow:0 1px 3px rgba(0,0,0,0.3),0 8px 32px rgba(0,0,0,0.4);
+            --peach:#3a2920;--peach-deep:#4d3325;
         }
-        [data-theme="dark"] .kpi-card.total { background: linear-gradient(135deg,#0a0f00 0%,#111800 100%); }
         [data-theme="dark"] .brand-icon { background: #f9fafb; }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -76,7 +80,7 @@
         }
         .brand-icon {
             width: 34px; height: 34px;
-            background: #111827; border-radius: 10px;
+            background: var(--navy); border-radius: 10px;
             display: flex; align-items: center; justify-content: center;
             font-size: 16px; font-weight: 800; color: var(--accent);
         }
@@ -103,7 +107,7 @@
             font-family: inherit; transition: all 0.15s;
         }
         .nav-item:hover { background: rgba(0,0,0,0.05); color: var(--sidebar-text-active); }
-        .nav-item.active { background: var(--accent); color: #111827; font-weight: 600; }
+        .nav-item.active { background: var(--accent); color: var(--navy); font-weight: 600; }
         [data-theme="dark"] .nav-item:hover { background: rgba(255,255,255,0.05); }
         .nav-icon { width: 16px; flex-shrink: 0; opacity: 0.9; }
         .nav-item.active .nav-icon { opacity: 1; }
@@ -115,7 +119,7 @@
         .sidebar-add {
             display: flex; align-items: center; justify-content: center; gap: 6px;
             width: 100%; padding: 10px;
-            background: var(--accent); color: #111827;
+            background: var(--accent); color: var(--navy);
             border: none; border-radius: var(--radius-sm);
             font-size: 13.5px; font-weight: 700;
             cursor: pointer; font-family: inherit;
@@ -175,34 +179,52 @@
             position: relative; overflow: hidden;
         }
         .kpi-card.total {
-            background: linear-gradient(135deg, #111827 0%, #1c2600 100%);
+            background: var(--navy);
             color: #fff;
+        }
+        .kpi-card.lime {
+            background: var(--accent);
+            color: var(--navy);
+        }
+        .kpi-card.peach {
+            background: var(--peach);
+            color: var(--navy);
         }
         .kpi-icon {
             width: 32px; height: 32px; border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; margin-bottom: 16px;
         }
-        .kpi-icon.green  { background: var(--accent-dim); }
+        .kpi-icon.green  { background: var(--accent-dim); color: var(--navy); }
         .kpi-icon.blue   { background: rgba(59,130,246,0.12); }
         .kpi-icon.red    { background: rgba(239,68,68,0.12); }
         .kpi-icon.amber  { background: rgba(245,158,11,0.12); }
         .kpi-icon.purple { background: rgba(139,92,246,0.12); }
+        .kpi-icon.orange { background: rgba(255,107,26,0.15); color: var(--orange); }
         .kpi-icon.total  { background: rgba(255,255,255,0.1); }
+        .kpi-card.lime .kpi-icon  { background: rgba(29,34,48,0.12); color: var(--navy); }
+        .kpi-card.peach .kpi-icon { background: rgba(255,107,26,0.15); color: var(--orange); }
         .kpi-label {
             font-size: 10px; font-weight: 600; color: var(--label3);
             text-transform: uppercase; letter-spacing: 1px;
             margin-bottom: 8px;
         }
         .kpi-card.total .kpi-label { color: rgba(255,255,255,0.5); }
+        .kpi-card.lime .kpi-label  { color: rgba(29,34,48,0.55); }
+        .kpi-card.peach .kpi-label { color: rgba(29,34,48,0.5); }
         .kpi-value {
             font-size: 30px; font-weight: 300;
             letter-spacing: -1px; line-height: 1;
             margin-bottom: 10px;
         }
         .kpi-card.total .kpi-value { color: #fff; }
+        .kpi-card.lime .kpi-value, .kpi-card.peach .kpi-value { color: var(--navy); }
+        .kpi-card.lime .kpi-value.pos, .kpi-card.lime .kpi-value.neg,
+        .kpi-card.peach .kpi-value.pos, .kpi-card.peach .kpi-value.neg { color: var(--navy); }
         .kpi-sub { font-size: 11px; color: var(--label3); margin-top: 4px; }
         .kpi-card.total .kpi-sub { color: rgba(255,255,255,0.4); }
+        .kpi-card.lime .kpi-sub  { color: rgba(29,34,48,0.55); }
+        .kpi-card.peach .kpi-sub { color: rgba(29,34,48,0.5); }
         .kpi-badge {
             display: inline-flex; align-items: center; gap: 3px;
             padding: 4px 10px; border-radius: 20px;
@@ -596,7 +618,7 @@
                     <div class="kpi-value" id="kpiNetWorth">$0</div>
                     <div class="kpi-sub" id="kpiNetWorthSub">Assets − Liabilities</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card lime">
                     <div class="kpi-icon green">↑</div>
                     <div class="kpi-label">Income (this month)</div>
                     <div class="kpi-value pos" id="kpiIncome">$0</div>
@@ -608,7 +630,7 @@
                     <div class="kpi-value neg" id="kpiExpense">$0</div>
                     <div class="kpi-sub" id="kpiExpenseSub">—</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card peach">
                     <div class="kpi-icon amber">%</div>
                     <div class="kpi-label">Savings Rate</div>
                     <div class="kpi-value" id="kpiSavings">0%</div>
