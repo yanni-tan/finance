@@ -453,6 +453,20 @@
         .proj-chip-val { font-size: 18px; font-weight: 300; letter-spacing: -0.5px; margin-top: 5px; }
         .proj-chip-sub { font-size: 10.5px; color: var(--label3); margin-top: 2px; }
 
+        /* ── Insights / warnings ── */
+        .insight-box {
+            border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px;
+            display: flex; gap: 13px; align-items: flex-start;
+        }
+        .insight-box.warn { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
+        .insight-box.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.32); }
+        .insight-box.ok { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); }
+        .insight-box.info { background: var(--surface2); border: 1px solid var(--sep); }
+        .insight-icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
+        .insight-title { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
+        .insight-msg { font-size: 12.5px; color: var(--label2); line-height: 1.55; }
+        .insight-msg b { color: var(--label); font-weight: 700; }
+
         /* ── Planning: budgets ── */
         .budget-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--sep); }
         .budget-row:last-child { border-bottom: none; }
@@ -712,6 +726,10 @@
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
                 Savings
             </button>
+            <button class="nav-item" data-page="spending">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>
+                Spending
+            </button>
             <button class="nav-item" data-page="transactions">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
                 Transactions
@@ -756,6 +774,7 @@
 
         <!-- ── Dashboard ── -->
         <section class="page active" id="page-dashboard">
+            <div id="dashInsight"></div>
             <div class="kpi-grid">
                 <div class="kpi-card total">
                     <div class="kpi-icon total">◈</div>
@@ -795,7 +814,7 @@
                 </div>
                 <div class="card">
                     <div class="card-header">
-                        <h2>Upcoming bills</h2>
+                        <h2>Bills this month</h2>
                         <div class="card-header-right">
                             <button class="row-btn" onclick="switchPage('plan')">Manage →</button>
                         </div>
@@ -969,6 +988,51 @@
                         </div>
                     </div>
                     <div id="savingsStatus"></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ── Spending (credit cards) ── -->
+        <section class="page" id="page-spending">
+            <div class="kpi-grid">
+                <div class="kpi-card pink">
+                    <div class="kpi-icon red">↓</div>
+                    <div class="kpi-label">Card spend this month</div>
+                    <div class="kpi-value" id="spendThis">$0</div>
+                    <div class="kpi-sub" id="spendThisSub">Total across cards</div>
+                </div>
+                <div class="kpi-card lime">
+                    <div class="kpi-icon green">◎</div>
+                    <div class="kpi-label">Budget to spend</div>
+                    <div class="kpi-value" id="spendBudget">$0</div>
+                    <div class="kpi-sub" id="spendBudgetSub">Income − bills − savings</div>
+                </div>
+                <div class="kpi-card total">
+                    <div class="kpi-icon total">=</div>
+                    <div class="kpi-label">Left to spend</div>
+                    <div class="kpi-value" id="spendLeft">$0</div>
+                    <div class="kpi-sub" id="spendLeftSub">After card spend</div>
+                </div>
+            </div>
+
+            <div id="spendInsight"></div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h2>Credit card spending</h2>
+                    <div class="card-header-right">
+                        <span class="count-badge" id="spendBadge">—</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:12px;color:var(--label3);margin-bottom:14px">Enter your total credit-card spending for the month (sum across all cards). It counts against your budget so you can see if you're overspending.</p>
+                    <div class="savings-inputs">
+                        <div class="fg" style="margin-bottom:0">
+                            <label>This month's card spend</label>
+                            <input type="number" class="finput" id="cardSpendInput" step="50" min="0" onchange="setCardSpend(this.value)">
+                        </div>
+                    </div>
+                    <div id="spendStatus"></div>
                 </div>
             </div>
         </section>
@@ -1210,6 +1274,7 @@ const DEFAULT_DATA = {
     budgets: {},
     recurring: [],
     savings: [],
+    cardSpend: [],
     settings: { currency: 'USD', theme: 'dark', savingsTarget: 5000, savingsBalance: 61143 }
 };
 const CATEGORIES = {
@@ -1361,16 +1426,36 @@ function recurNextDate(r) {
     return new Date(y, m, day);
 }
 
+// A recurring bill counts as paid this month once it's been logged OR its due day has passed.
+function recurPaid(r) {
+    if (r.lastLogged === currentMonthKey()) return true;
+    const now = new Date();
+    const dueDay = Math.min(Number(r.dayOfMonth) || 1, daysInMonth(now.getFullYear(), now.getMonth()));
+    return now.getDate() >= dueDay;
+}
+
+// Credit-card spending — total logged for a given month
+function cardSpendForMonth(key) {
+    return data.cardSpend.filter(c => c.month === key).reduce((s, c) => s + Number(c.amount), 0);
+}
+function cardSpendSeries() {
+    const byMonth = {};
+    data.cardSpend.forEach(c => { byMonth[c.month] = (byMonth[c.month] || 0) + Number(c.amount); });
+    return Object.entries(byMonth).map(([month, amount]) => ({ month, amount })).sort((a, b) => a.month.localeCompare(b.month));
+}
+
 function safeToSpend() {
     const txs = txInMonth(currentMonthKey());
     const incomeActual = sumIncome(txs);
-    const spent = sumExpense(txs);
+    const cardSpend = cardSpendForMonth(currentMonthKey());
+    const spent = sumExpense(txs) + cardSpend;                 // transactions + credit-card spending
     const upcomingIncome = recurUpcoming('income').reduce((s, r) => s + Number(r.amount), 0);
     const upcomingBills = recurUpcoming('expense').reduce((s, r) => s + Number(r.amount), 0);
     const expectedIncome = incomeActual + upcomingIncome;
     const savingsTarget = Number(data.settings.savingsTarget) || 0;
     const projectedSavings = expectedIncome - spent - upcomingBills;   // "save what's left"
-    return { expectedIncome, incomeActual, upcomingIncome, spent, upcomingBills, savingsTarget,
+    return { expectedIncome, incomeActual, upcomingIncome, spent, cardSpend, upcomingBills, savingsTarget,
+             available: expectedIncome - upcomingBills - savingsTarget, // budget for variable spending
              projectedSavings,
              safe: projectedSavings - savingsTarget };                 // free to spend after reserving target
 }
@@ -1401,43 +1486,44 @@ function renderPlanSummaryDash() {
     safeEl.innerHTML = `
         <div class="safe-amount ${s.safe < 0 ? 'neg' : ''}">${fmt(s.safe)}</div>
         <div class="safe-formula">
-            <span><b>${fmt(s.expectedIncome)}</b> expected income</span>
+            <span><b>${fmt(s.expectedIncome)}</b> income</span>
             <span class="op">−</span>
-            <span><b>${fmt(s.spent)}</b> spent</span>
+            <span><b>${fmt(s.upcomingBills)}</b> bills</span>
             <span class="op">−</span>
-            <span><b>${fmt(s.upcomingBills)}</b> bills due</span>
+            <span><b>${fmt(s.cardSpend)}</b> card spend</span>
+            <span class="op">−</span>
+            <span><b>${fmt(s.savingsTarget)}</b> to save</span>
         </div>
         <div class="safe-bar">
             <div class="safe-bar-spent" style="width:${spentPct}%"></div>
             <div class="safe-bar-bills" style="width:${billsPct}%"></div>
         </div>
         <div class="safe-legend">
-            <span><i style="background:#f43f6b"></i>Spent</span>
-            <span><i style="background:#f59e0b"></i>Bills due</span>
+            <span><i style="background:#f43f6b"></i>Card spend</span>
+            <span><i style="background:#f59e0b"></i>Bills</span>
             <span><i style="background:var(--surface2)"></i>Free</span>
         </div>`;
 
     const upEl = document.getElementById('upcomingBody');
-    const upcoming = [...recurUpcoming('expense'), ...recurUpcoming('income')]
-        .sort((a, b) => recurNextDate(a) - recurNextDate(b));
-    if (upcoming.length === 0) {
-        upEl.innerHTML = data.recurring.length === 0
-            ? emptyHTML('🔁', 'No recurring items', 'Add rent, subscriptions, or your paycheck to plan ahead.', `<button class="btn btn-primary" onclick="switchPage('plan')" style="flex:0;display:inline-block;margin-top:8px">Set up</button>`)
-            : `<div class="empty" style="padding:24px"><p style="color:var(--label3);font-size:12px">All caught up — everything for this month is logged. ✓</p></div>`;
+    const bills = data.recurring.filter(r => r.type === 'expense').sort((a, b) => recurNextDate(a) - recurNextDate(b));
+    if (data.recurring.length === 0) {
+        upEl.innerHTML = emptyHTML('🔁', 'No bills yet', 'Add rent, subscriptions, or your paycheck to plan ahead.', `<button class="btn btn-primary" onclick="switchPage('plan')" style="flex:0;display:inline-block;margin-top:8px">Set up</button>`);
         return;
     }
-    upEl.innerHTML = upcoming.slice(0, 6).map(r => {
+    upEl.innerHTML = bills.slice(0, 6).map(r => {
+        const paid = recurPaid(r);
         const d = recurNextDate(r);
         const days = Math.ceil((d - new Date()) / 86400000);
-        const soon = days <= 5;
-        const sign = r.type === 'income' ? '+' : '−';
-        const cls = r.type === 'income' ? 'pos' : 'neg';
+        const sub = paid ? 'Paid this month' : `Due ${fmtDate(d)}${days <= 5 ? ' · soon' : ''}`;
         return `<div class="upcoming-row">
             <div>
                 <div class="recur-name">${escapeHTML(r.note || r.category)}</div>
-                <div class="recur-sub">Due ${fmtDate(d)}${soon ? ' · soon' : ''}</div>
+                <div class="recur-sub">${sub}</div>
             </div>
-            <div class="${cls}" style="font-weight:700;white-space:nowrap">${sign}${fmt(Number(r.amount))}</div>
+            <div style="display:flex;align-items:center;gap:10px">
+                <span class="recur-due ${paid ? 'logged' : 'soon'}">${paid ? '✓ Paid' : 'Due'}</span>
+                <span class="neg" style="font-weight:700;white-space:nowrap">−${fmt(Number(r.amount))}</span>
+            </div>
         </div>`;
     }).join('');
 }
@@ -1466,6 +1552,13 @@ function savingsSeries() {
 function focusSavingsInput() {
     switchPage('savings');
     const el = document.getElementById('savingsBalanceInput');
+    el.focus();
+    el.select();
+}
+
+function focusSpendInput() {
+    switchPage('spending');
+    const el = document.getElementById('cardSpendInput');
     el.focus();
     el.select();
 }
@@ -1611,6 +1704,99 @@ function deleteSavings(month) {
     renderDashboard();
 }
 
+// ─── Render: Spending (credit cards) ───
+function renderSpending() {
+    const s = safeToSpend();
+    const cardSpend = s.cardSpend;
+    const budget = s.available;                 // income − bills − savings target
+    const left = budget - cardSpend;
+    document.getElementById('cardSpendInput').value = cardSpend || '';
+    document.getElementById('spendThis').textContent = fmt(cardSpend);
+    document.getElementById('spendBudget').textContent = fmt(budget);
+    document.getElementById('spendLeft').textContent = fmt(left);
+    document.getElementById('spendLeftSub').textContent = left < 0 ? 'Over budget' : 'Still available';
+
+    const badge = document.getElementById('spendBadge');
+    let box;
+    if (cardSpend === 0) {
+        badge.textContent = 'Not logged';
+        box = `<div class="insight-box info"><div class="insight-icon">💳</div><div><div class="insight-title">Log your card spending</div><div class="insight-msg">You have <b>${fmt(budget)}</b> to spend this month after bills and your ${fmt(s.savingsTarget)} savings target. Enter your card total below to track against it.</div></div></div>`;
+    } else if (left < 0) {
+        badge.textContent = 'Over budget';
+        const shortToTarget = s.savingsTarget - s.projectedSavings;
+        box = `<div class="insight-box warn"><div class="insight-icon">⚠️</div><div><div class="insight-title">${fmt(-left)} over budget</div><div class="insight-msg">Card spend of <b>${fmt(cardSpend)}</b> is more than your <b>${fmt(budget)}</b> spendable budget. At this rate you'll save <b>${fmt(s.projectedSavings)}</b>${shortToTarget > 0 ? ` — ${fmt(shortToTarget)} short of your ${fmt(s.savingsTarget)} target` : ''}. Cut back or you'll dip into savings.</div></div></div>`;
+    } else if (budget > 0 && left < budget * 0.15) {
+        badge.textContent = 'Close to limit';
+        box = `<div class="insight-box amber"><div class="insight-icon">🟠</div><div><div class="insight-title">Only ${fmt(left)} left to spend</div><div class="insight-msg">You've used most of this month's budget. Keep further card spend under <b>${fmt(left)}</b> to still hit your ${fmt(s.savingsTarget)} savings target.</div></div></div>`;
+    } else {
+        badge.textContent = 'On budget';
+        box = `<div class="insight-box ok"><div class="insight-icon">✅</div><div><div class="insight-title">${fmt(left)} left to spend</div><div class="insight-msg">Card spend of ${fmt(cardSpend)} is within budget. You're on track to save <b>${fmt(s.projectedSavings)}</b> this month.</div></div></div>`;
+    }
+    document.getElementById('spendInsight').innerHTML = box;
+
+    const series = cardSpendSeries();
+    document.getElementById('spendStatus').innerHTML = spendChartHTML(series) + spendHistoryHTML(series, budget);
+}
+
+function spendChartHTML(series) {
+    if (series.length < 2) return '';
+    const vals = series.map(s => s.amount);
+    const min = Math.min(...vals, 0), max = Math.max(...vals);
+    const range = (max - min) || 1;
+    const pad = 12, span = 100 - 2 * pad;
+    const pts = vals.map((v, i) => [(i / (vals.length - 1)) * 100, pad + (1 - (v - min) / range) * span]);
+    const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ');
+    const area = `${line} L100,100 L0,100 Z`;
+    const last = pts[pts.length - 1];
+    return `<div style="font-size:11px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;margin:18px 0 8px">Spending trend</div>
+    <div class="trend-chart" style="height:120px;margin-bottom:6px">
+        <svg class="trend-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs><linearGradient id="spGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(244,114,182,0.4)"/>
+                <stop offset="100%" stop-color="rgba(244,114,182,0)"/>
+            </linearGradient></defs>
+            <path d="${area}" fill="url(#spGrad)"/>
+            <path class="trend-line" d="${line}"/>
+        </svg>
+        <div class="trend-dot" style="left:${last[0]}%;top:${last[1]}%"></div>
+    </div>
+    <div class="trend-axis" style="margin-bottom:8px">${series.map(s => `<span>${fmtMonth(s.month).split(' ')[0].slice(0, 3)}</span>`).join('')}</div>`;
+}
+
+function spendHistoryHTML(series, budget) {
+    if (series.length === 0) return '';
+    const rows = [...series].reverse().map(s => {
+        const over = budget > 0 && s.amount > budget;
+        return `<div class="upcoming-row">
+            <div><div class="recur-name">${fmtMonth(s.month)}</div></div>
+            <div style="display:flex;align-items:center;gap:10px">
+                <span class="recur-due ${over ? 'soon' : 'logged'}">${over ? 'Over' : 'OK'}</span>
+                <span style="font-weight:700;white-space:nowrap;min-width:90px;text-align:right">${fmt(s.amount)}</span>
+                <button class="row-btn del" onclick="deleteCardSpend('${s.month}')">×</button>
+            </div>
+        </div>`;
+    }).join('');
+    return `<div style="margin-top:18px;border-top:1px solid var(--sep);padding-top:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Monthly history</div>
+        ${rows}</div>`;
+}
+
+function setCardSpend(val) {
+    const amt = Math.max(0, parseFloat(val) || 0);
+    const key = currentMonthKey();
+    const existing = data.cardSpend.find(c => c.month === key);
+    if (existing) existing.amount = amt;
+    else data.cardSpend.push({ month: key, amount: amt });
+    saveData();
+    renderAll();
+    toast('Card spend updated');
+}
+function deleteCardSpend(month) {
+    data.cardSpend = data.cardSpend.filter(c => c.month !== month);
+    saveData();
+    renderAll();
+}
+
 function renderBudgets() {
     const st = budgetStatus();
     const el = document.getElementById('budgetList');
@@ -1661,10 +1847,11 @@ function renderRecurring() {
     const sorted = [...data.recurring].sort((a, b) => recurNextDate(a) - recurNextDate(b));
     el.innerHTML = sorted.map(r => {
         const logged = r.lastLogged === currentMonthKey();
+        const paid = recurPaid(r);
         const d = recurNextDate(r);
         const days = Math.ceil((d - new Date()) / 86400000);
-        const dueCls = logged ? 'logged' : (days <= 5 ? 'soon' : 'pending');
-        const dueTxt = logged ? '✓ Logged' : `Due ${fmtDate(d)}`;
+        const dueCls = paid ? 'logged' : (days <= 5 ? 'soon' : 'pending');
+        const dueTxt = logged ? '✓ Logged' : paid ? '✓ Paid' : `Due ${fmtDate(d)}`;
         const sign = r.type === 'income' ? '+' : '−';
         const cls = r.type === 'income' ? 'pos' : 'neg';
         return `<div class="recur-row">
@@ -1733,6 +1920,7 @@ function renderDashboard() {
     renderTrend();
     renderPlanSummaryDash();
     renderDashGoals();
+    renderDashInsight();
 
     const hour = new Date().getHours();
     const greet = hour < 5 ? 'Good night.' : hour < 12 ? 'Good morning.' : hour < 18 ? 'Good afternoon.' : 'Good evening.';
@@ -1743,6 +1931,19 @@ function renderDashboard() {
 
 function emptyHTML(icon, title, msg, action = '') {
     return `<div class="empty"><div class="empty-icon">${icon}</div><h3>${title}</h3><p>${msg}</p>${action}</div>`;
+}
+
+function renderDashInsight() {
+    const el = document.getElementById('dashInsight');
+    const s = safeToSpend();
+    const left = s.available - s.cardSpend;
+    if (s.cardSpend > 0 && left < 0) {
+        el.innerHTML = `<div class="insight-box warn"><div class="insight-icon">⚠️</div><div><div class="insight-title">Overspending this month — ${fmt(-left)} over budget</div><div class="insight-msg">Card spend of <b>${fmt(s.cardSpend)}</b> exceeds your <b>${fmt(s.available)}</b> spendable budget. You're set to save <b>${fmt(s.projectedSavings)}</b> vs your ${fmt(s.savingsTarget)} target. <a onclick="switchPage('spending')" style="color:var(--accent);cursor:pointer;text-decoration:underline">Review spending →</a></div></div></div>`;
+    } else if (s.cardSpend > 0 && s.available > 0 && left < s.available * 0.15) {
+        el.innerHTML = `<div class="insight-box amber"><div class="insight-icon">🟠</div><div><div class="insight-title">Only ${fmt(left)} left to spend this month</div><div class="insight-msg">You've used most of your budget. Keep further card spend under <b>${fmt(left)}</b> to still hit your ${fmt(s.savingsTarget)} savings target.</div></div></div>`;
+    } else {
+        el.innerHTML = '';
+    }
 }
 
 function renderCatBreakdown() {
@@ -2365,6 +2566,7 @@ function switchPage(page) {
     else if (page === 'goals') { addBtn.textContent = '+ New goal'; addBtn.onclick = openGoalModal; }
     else if (page === 'plan') { addBtn.textContent = '+ Add recurring'; addBtn.onclick = openRecurModal; }
     else if (page === 'savings') { addBtn.textContent = '↻ Update savings'; addBtn.onclick = focusSavingsInput; }
+    else if (page === 'spending') { addBtn.textContent = '↻ Update card spend'; addBtn.onclick = focusSpendInput; }
     else { addBtn.textContent = '+ Add transaction'; addBtn.onclick = openTxModal; }
     document.getElementById('sidebar').classList.remove('open');
     renderAll();
@@ -2432,6 +2634,7 @@ function renderAll() {
     renderAccounts();
     renderGoals();
     renderPlan();
+    renderSpending();
 }
 
 document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
