@@ -42,12 +42,12 @@
             --sidebar-w: 240px;
         }
         [data-theme="dark"] {
-            --sidebar:#13172a;--sidebar-border:rgba(255,255,255,0.06);--sidebar-text:#7a8294;--sidebar-text-active:#f9fafb;
-            --bg:#0c0f1a;--surface:#1d2230;--surface2:#262b3a;--label:#f1f5f9;--label2:#9aa3b8;--label3:#5b6580;
-            --sep:#262b3a;--shadow:0 1px 3px rgba(0,0,0,0.3),0 8px 32px rgba(0,0,0,0.4);
-            --peach:#3a2920;--peach-deep:#4d3325;
+            --sidebar:#0e0f15;--sidebar-border:rgba(255,255,255,0.05);--sidebar-text:#7a8294;--sidebar-text-active:#f9fafb;
+            --bg:#08090d;--surface:#14161e;--surface2:#1d2029;--label:#f4f5f7;--label2:#9aa0ad;--label3:#5f6675;
+            --sep:#22252f;--shadow:0 1px 3px rgba(0,0,0,0.4),0 12px 40px rgba(0,0,0,0.55);
+            --accent:#cdff3d;--accent-dim:rgba(205,255,61,0.14);
         }
-        [data-theme="dark"] .brand-icon { background: #f9fafb; }
+        [data-theme="dark"] .brand-icon { background: var(--accent); color: var(--navy); }
 
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -179,17 +179,33 @@
             position: relative; overflow: hidden;
         }
         .kpi-card.total {
-            background: var(--navy);
+            background: linear-gradient(145deg, #3b2cd6 0%, #5a3ff2 58%, #8a5cff 100%);
             color: #fff;
         }
         .kpi-card.lime {
-            background: var(--accent);
+            background: linear-gradient(145deg, #aee218 0%, #d8ff3e 100%);
             color: var(--navy);
         }
         .kpi-card.peach {
-            background: var(--peach);
+            background: linear-gradient(145deg, #ff9b6b 0%, #ffcda0 100%);
             color: var(--navy);
         }
+        .kpi-card.pink {
+            background: linear-gradient(145deg, #f43f6b 0%, #ff7a9c 100%);
+            color: #fff;
+        }
+        /* glow blob — echoes the overlapping rounded shapes in the reference cards */
+        .kpi-card.total::before, .kpi-card.lime::before, .kpi-card.peach::before, .kpi-card.pink::before {
+            content: ""; position: absolute;
+            top: -40%; right: -20%;
+            width: 180px; height: 180px; border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,255,255,0.32), transparent 70%);
+            pointer-events: none;
+        }
+        .kpi-card.lime::before, .kpi-card.peach::before {
+            background: radial-gradient(circle, rgba(255,255,255,0.45), transparent 70%);
+        }
+        .kpi-card.total > *, .kpi-card.lime > *, .kpi-card.peach > *, .kpi-card.pink > * { position: relative; z-index: 1; }
         .kpi-icon {
             width: 32px; height: 32px; border-radius: 9px;
             display: flex; align-items: center; justify-content: center;
@@ -203,13 +219,15 @@
         .kpi-icon.orange { background: rgba(255,107,26,0.15); color: var(--orange); }
         .kpi-icon.total  { background: rgba(255,255,255,0.1); }
         .kpi-card.lime .kpi-icon  { background: rgba(29,34,48,0.12); color: var(--navy); }
-        .kpi-card.peach .kpi-icon { background: rgba(255,107,26,0.15); color: var(--orange); }
+        .kpi-card.peach .kpi-icon { background: rgba(29,34,48,0.14); color: var(--navy); }
+        .kpi-card.pink .kpi-icon  { background: rgba(255,255,255,0.18); color: #fff; }
         .kpi-label {
             font-size: 10px; font-weight: 600; color: var(--label3);
             text-transform: uppercase; letter-spacing: 1px;
             margin-bottom: 8px;
         }
         .kpi-card.total .kpi-label { color: rgba(255,255,255,0.5); }
+        .kpi-card.pink .kpi-label  { color: rgba(255,255,255,0.65); }
         .kpi-card.lime .kpi-label  { color: rgba(29,34,48,0.55); }
         .kpi-card.peach .kpi-label { color: rgba(29,34,48,0.5); }
         .kpi-value {
@@ -218,11 +236,13 @@
             margin-bottom: 10px;
         }
         .kpi-card.total .kpi-value { color: #fff; }
+        .kpi-card.pink .kpi-value, .kpi-card.pink .kpi-value.pos, .kpi-card.pink .kpi-value.neg { color: #fff; }
         .kpi-card.lime .kpi-value, .kpi-card.peach .kpi-value { color: var(--navy); }
         .kpi-card.lime .kpi-value.pos, .kpi-card.lime .kpi-value.neg,
         .kpi-card.peach .kpi-value.pos, .kpi-card.peach .kpi-value.neg { color: var(--navy); }
         .kpi-sub { font-size: 11px; color: var(--label3); margin-top: 4px; }
         .kpi-card.total .kpi-sub { color: rgba(255,255,255,0.4); }
+        .kpi-card.pink .kpi-sub  { color: rgba(255,255,255,0.6); }
         .kpi-card.lime .kpi-sub  { color: rgba(29,34,48,0.55); }
         .kpi-card.peach .kpi-sub { color: rgba(29,34,48,0.5); }
         .kpi-badge {
@@ -378,11 +398,11 @@
             margin-bottom: 10px;
         }
         .goal-fill {
-            height: 100%; background: var(--accent);
+            height: 100%; background: linear-gradient(90deg, #aee218, #d8ff3e);
             border-radius: 4px;
             transition: width .3s;
         }
-        .goal-fill.done { background: var(--green); }
+        .goal-fill.done { background: linear-gradient(90deg, #16a34a, #22c55e); }
         .goal-meta {
             display: flex; align-items: center; justify-content: space-between;
             font-size: 11px; color: var(--label2);
@@ -624,7 +644,7 @@
                     <div class="kpi-value pos" id="kpiIncome">$0</div>
                     <div class="kpi-sub" id="kpiIncomeSub">—</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card pink">
                     <div class="kpi-icon red">↓</div>
                     <div class="kpi-label">Expenses (this month)</div>
                     <div class="kpi-value neg" id="kpiExpense">$0</div>
@@ -675,18 +695,18 @@
         <!-- ── Transactions ── -->
         <section class="page" id="page-transactions">
             <div class="kpi-grid">
-                <div class="kpi-card">
+                <div class="kpi-card lime">
                     <div class="kpi-icon green">↑</div>
                     <div class="kpi-label">Income</div>
                     <div class="kpi-value pos" id="txIncome">$0</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card pink">
                     <div class="kpi-icon red">↓</div>
                     <div class="kpi-label">Expenses</div>
                     <div class="kpi-value neg" id="txExpense">$0</div>
                 </div>
-                <div class="kpi-card">
-                    <div class="kpi-icon blue">=</div>
+                <div class="kpi-card total">
+                    <div class="kpi-icon total">=</div>
                     <div class="kpi-label">Net</div>
                     <div class="kpi-value" id="txNet">$0</div>
                 </div>
@@ -714,12 +734,12 @@
                     <div class="kpi-label">Net Worth</div>
                     <div class="kpi-value" id="acctNetWorth">$0</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card lime">
                     <div class="kpi-icon blue">↗</div>
                     <div class="kpi-label">Total Assets</div>
                     <div class="kpi-value pos" id="acctAssets">$0</div>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card peach">
                     <div class="kpi-icon amber">↘</div>
                     <div class="kpi-label">Total Liabilities</div>
                     <div class="kpi-value neg" id="acctLiabilities">$0</div>
@@ -897,7 +917,7 @@ const DEFAULT_DATA = {
     transactions: [],
     accounts: [],
     goals: [],
-    settings: { currency: 'USD', theme: 'light' }
+    settings: { currency: 'USD', theme: 'dark' }
 };
 const CATEGORIES = {
     expense: [
@@ -1515,7 +1535,7 @@ function switchPage(page) {
 
 // ─── Theme ───
 function toggleTheme() {
-    const cur = data.settings.theme || 'light';
+    const cur = data.settings.theme || 'dark';
     const next = cur === 'light' ? 'dark' : 'light';
     data.settings.theme = next;
     document.documentElement.setAttribute('data-theme', next);
@@ -1582,7 +1602,7 @@ document.addEventListener('keydown', e => {
 });
 
 // First-run seed (empty — user enters their own)
-document.documentElement.setAttribute('data-theme', data.settings.theme || 'light');
+document.documentElement.setAttribute('data-theme', data.settings.theme || 'dark');
 renderAll();
 </script>
 </body>
