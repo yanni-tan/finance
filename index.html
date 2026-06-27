@@ -708,6 +708,10 @@
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
                 Dashboard
             </button>
+            <button class="nav-item" data-page="savings">
+                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                Savings
+            </button>
             <button class="nav-item" data-page="transactions">
                 <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h18M3 6h18M3 18h12"/></svg>
                 Transactions
@@ -760,7 +764,7 @@
                 </div>
                 <div class="kpi-card lime">
                     <div class="kpi-icon green">↑</div>
-                    <div class="kpi-label">Income (this month)</div>
+                    <div class="kpi-label">Income · after CPF</div>
                     <div class="kpi-value pos" id="kpiIncome">$0</div>
                     <div class="kpi-sub" id="kpiIncomeSub">—</div>
                 </div>
@@ -848,7 +852,7 @@
             <div class="kpi-grid">
                 <div class="kpi-card lime">
                     <div class="kpi-icon green">↑</div>
-                    <div class="kpi-label">Income</div>
+                    <div class="kpi-label">Income · after CPF</div>
                     <div class="kpi-value pos" id="txIncome">$0</div>
                 </div>
                 <div class="kpi-card pink">
@@ -921,9 +925,30 @@
             <div id="goalsList"></div>
         </section>
 
-        <!-- ── Plan & Budget ── -->
-        <section class="page" id="page-plan">
-            <div class="card" style="margin-bottom:20px">
+        <!-- ── Savings ── -->
+        <section class="page" id="page-savings">
+            <div class="kpi-grid">
+                <div class="kpi-card total">
+                    <div class="kpi-icon total">◈</div>
+                    <div class="kpi-label">Current savings</div>
+                    <div class="kpi-value" id="savCurrent">$0</div>
+                    <div class="kpi-sub" id="savCurrentSub">Latest balance</div>
+                </div>
+                <div class="kpi-card lime">
+                    <div class="kpi-icon green">◎</div>
+                    <div class="kpi-label">Saved this month</div>
+                    <div class="kpi-value" id="savThisMonth">—</div>
+                    <div class="kpi-sub" id="savThisMonthSub">vs target</div>
+                </div>
+                <div class="kpi-card peach">
+                    <div class="kpi-icon amber">↗</div>
+                    <div class="kpi-label">Projected in 1 year</div>
+                    <div class="kpi-value" id="savProjected">$0</div>
+                    <div class="kpi-sub" id="savProjectedSub">at target rate</div>
+                </div>
+            </div>
+
+            <div class="card">
                 <div class="card-header">
                     <h2>Savings plan</h2>
                     <div class="card-header-right">
@@ -945,7 +970,10 @@
                     <div id="savingsStatus"></div>
                 </div>
             </div>
+        </section>
 
+        <!-- ── Plan & Budget ── -->
+        <section class="page" id="page-plan">
             <div class="kpi-grid">
                 <div class="kpi-card lime">
                     <div class="kpi-icon green">✓</div>
@@ -1211,6 +1239,14 @@ const CATEGORIES = {
 };
 const ASSET_TYPES = new Set(['cash','checking','savings','investment','retirement','property']);
 
+// CPF — Singapore employee contribution (20%); take-home = 80%. Applies to wages only.
+const CPF_RATE = 0.20;
+const CPF_CATEGORIES = new Set(['Salary', 'Bonus']);
+function netIncomeAmount(t) {
+    const gross = Number(t.amount);
+    return CPF_CATEGORIES.has(t.category) ? gross * (1 - CPF_RATE) : gross;
+}
+
 let data = loadData();
 let txEditId = null;
 let acctEditId = null;
@@ -1291,7 +1327,7 @@ function netWorth() { return sumAssets() - sumLiabilities(); }
 function txInMonth(key) {
     return data.transactions.filter(t => monthKeyOf(t.date) === key);
 }
-function sumIncome(txs) { return txs.filter(t => t.type === 'income').reduce((s, t) => s + Number(t.amount), 0); }
+function sumIncome(txs) { return txs.filter(t => t.type === 'income').reduce((s, t) => s + netIncomeAmount(t), 0); }
 function sumExpense(txs) { return txs.filter(t => t.type === 'expense').reduce((s, t) => s + Number(t.amount), 0); }
 
 function monthChange() {
@@ -1426,6 +1462,13 @@ function savingsSeries() {
     return [...data.savings].sort((a, b) => a.month.localeCompare(b.month));
 }
 
+function focusSavingsInput() {
+    switchPage('savings');
+    const el = document.getElementById('savingsBalanceInput');
+    el.focus();
+    el.select();
+}
+
 function renderSavings() {
     const series = savingsSeries();
     const target = Number(data.settings.savingsTarget) || 0;
@@ -1436,6 +1479,16 @@ function renderSavings() {
     // Saved this month = change between the two most recent monthly snapshots
     let savedThisMonth = null;
     if (series.length >= 2) savedThisMonth = series[series.length - 1].balance - series[series.length - 2].balance;
+
+    // Savings-page KPI cards
+    document.getElementById('savCurrent').textContent = fmt(currentBalance);
+    document.getElementById('savCurrentSub').textContent = series.length ? `As of ${fmtMonth(series[series.length - 1].month)}` : 'Not logged yet';
+    document.getElementById('savThisMonth').textContent = savedThisMonth === null ? '—' : fmt(savedThisMonth);
+    document.getElementById('savThisMonthSub').textContent = savedThisMonth === null
+        ? (series.length ? 'Update next month' : 'Log to start')
+        : (target > 0 ? (savedThisMonth >= target ? `Hit ${fmt(target)} ✓` : `${fmt(target - savedThisMonth)} below target`) : 'logged');
+    document.getElementById('savProjected').textContent = fmt(currentBalance + target * 12);
+    document.getElementById('savProjectedSub').textContent = `at ${fmt(target)}/mo`;
 
     const badge = document.getElementById('savingsStatusBadge');
     let headline, cls = '';
@@ -1563,11 +1616,17 @@ function renderBudgets() {
     document.getElementById('budgetTotal').textContent =
         st.totalLimit > 0 ? `${fmt(st.totalSpent)} / ${fmt(st.totalLimit)}` : 'No budgets set';
 
-    el.innerHTML = `<p style="font-size:12px;color:var(--label3);margin-bottom:8px">Set a monthly limit per category. Bars show this month's spending.</p>` +
-        CATEGORIES.expense.map(c => {
+    // Categories already covered by recurring bills are fixed — exclude them from budgeting
+    const billCats = new Set(data.recurring.filter(r => r.type === 'expense').map(r => r.category));
+    const budgetable = CATEGORIES.expense.filter(c => !billCats.has(c.name));
+    const hiddenNote = billCats.size
+        ? `<p style="font-size:11px;color:var(--label3);margin-top:10px">${[...billCats].join(', ')} ${billCats.size === 1 ? 'is' : 'are'} handled as fixed bills under Recurring — not budgeted here.</p>`
+        : '';
+
+    el.innerHTML = `<p style="font-size:12px;color:var(--label3);margin-bottom:8px">Set a monthly limit per variable category. Bars show this month's spending. Fixed bills live under Recurring.</p>` +
+        budgetable.map(c => {
             const limit = Number(data.budgets[c.name]) || 0;
-            const st2 = budgetStatus().rows.find(r => r.cat === c.name);
-            const spent = st2 ? st2.spent : (txInMonth(currentMonthKey()).filter(t => t.type === 'expense' && t.category === c.name).reduce((s, t) => s + Number(t.amount), 0));
+            const spent = txInMonth(currentMonthKey()).filter(t => t.type === 'expense' && t.category === c.name).reduce((s, t) => s + Number(t.amount), 0);
             const pct = limit > 0 ? Math.min(100, (spent / limit) * 100) : 0;
             const over = limit > 0 && spent > limit;
             return `<div class="budget-row">
@@ -1577,7 +1636,7 @@ function renderBudgets() {
                 <span class="budget-spent">${limit > 0 ? `${fmt(spent)} / <span class="${over ? 'over' : ''}">${fmt(limit)}</span>` : `<span style="color:var(--label3)">${fmt(spent)} spent</span>`}</span>
                 <input type="number" class="budget-input" placeholder="—" min="0" step="10" value="${limit > 0 ? limit : ''}" onchange="setBudget('${c.name}', this.value)">
             </div>`;
-        }).join('');
+        }).join('') + hiddenNote;
 }
 
 function setBudget(cat, val) {
@@ -1846,12 +1905,15 @@ function txRowHTML(t) {
     const sign = t.type === 'income' ? '+' : '−';
     const cls = t.type === 'income' ? 'pos' : 'neg';
     const color = catColor(t.type, t.category);
+    const cpf = t.type === 'income' && CPF_CATEGORIES.has(t.category);
+    const displayAmt = t.type === 'income' ? netIncomeAmount(t) : Number(t.amount);
+    const amtTitle = cpf ? ` title="${fmt(Number(t.amount))} gross, after ${(CPF_RATE * 100).toFixed(0)}% CPF"` : '';
     return `<tr>
         <td style="color:var(--label2);font-size:12px;white-space:nowrap">${fmtDate(t.date)}</td>
         <td style="font-weight:500">${escapeHTML(t.note || (t.type === 'income' ? 'Income' : 'Expense'))}</td>
-        <td><span class="cat-pill"><span class="cat-dot" style="background:${color}"></span>${t.category}</span></td>
+        <td><span class="cat-pill"><span class="cat-dot" style="background:${color}"></span>${t.category}${cpf ? ' <span style="color:var(--label3);font-size:10px">·CPF</span>' : ''}</span></td>
         <td style="color:var(--label2);font-size:12px">${escapeHTML(acctName)}</td>
-        <td class="r ${cls}" style="font-weight:600;white-space:nowrap">${sign}${fmt(Math.abs(t.amount))}</td>
+        <td class="r ${cls}" style="font-weight:600;white-space:nowrap"${amtTitle}>${sign}${fmt(Math.abs(displayAmt))}</td>
         <td class="r"><div class="row-actions">
             <button class="row-btn" onclick="editTx('${t.id}')">Edit</button>
             <button class="row-btn del" onclick="deleteTx('${t.id}')">Delete</button>
@@ -2301,6 +2363,7 @@ function switchPage(page) {
     if (page === 'accounts') { addBtn.textContent = '+ Add account'; addBtn.onclick = openAcctModal; }
     else if (page === 'goals') { addBtn.textContent = '+ New goal'; addBtn.onclick = openGoalModal; }
     else if (page === 'plan') { addBtn.textContent = '+ Add recurring'; addBtn.onclick = openRecurModal; }
+    else if (page === 'savings') { addBtn.textContent = '↻ Update savings'; addBtn.onclick = focusSavingsInput; }
     else { addBtn.textContent = '+ Add transaction'; addBtn.onclick = openTxModal; }
     document.getElementById('sidebar').classList.remove('open');
     renderAll();
