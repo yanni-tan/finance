@@ -737,6 +737,7 @@
                 <button class="util-btn" id="exportBtn" title="Export data">Export</button>
                 <button class="util-btn" id="importBtn" title="Import data">Import</button>
             </div>
+            <button class="util-btn" id="resetBtn" title="Erase all data" style="width:100%;margin-top:6px;color:var(--red);border-color:rgba(239,68,68,0.3)">Reset all data</button>
         </div>
     </aside>
 
@@ -2379,8 +2380,22 @@ function toggleTheme() {
 }
 
 // ─── Export / Import ───
-function exportData() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+function resetData() {
+    if (!confirm('Erase ALL data — transactions, accounts, goals, budgets, recurring items, and savings history? This cannot be undone.')) return;
+    if (!confirm('Are you sure? Tip: use Export first if you might want it back.')) return;
+    const theme = data.settings.theme || 'dark';
+    const currency = data.settings.currency || 'USD';
+    data = {
+        transactions: [], accounts: [], goals: [], budgets: {}, recurring: [], savings: [],
+        settings: { currency, theme, savingsTarget: 5000, savingsBalance: 0 }
+    };
+    saveData();
+    monthFilter = currentMonthKey();
+    renderAll();
+    toast('All data cleared');
+}
+
+function exportData() {    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -2424,6 +2439,7 @@ document.getElementById('addBtn').addEventListener('click', openTxModal);
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
+document.getElementById('resetBtn').addEventListener('click', resetData);
 document.getElementById('importFile').addEventListener('change', e => {
     if (e.target.files[0]) importData(e.target.files[0]);
     e.target.value = '';
