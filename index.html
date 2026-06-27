@@ -438,6 +438,21 @@
         .safe-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11px; color: var(--label2); }
         .safe-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
 
+        /* ── Planning: savings ── */
+        .savings-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
+        .savings-headline { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
+        .savings-headline.behind { color: var(--red); }
+        .savings-headline.ahead { color: var(--green); }
+        .savings-proj { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+        .proj-chip {
+            flex: 1; min-width: 120px;
+            background: var(--surface2); border: 1px solid var(--sep);
+            border-radius: var(--radius-sm); padding: 12px 14px;
+        }
+        .proj-chip-label { font-size: 10px; font-weight: 700; color: var(--label3); text-transform: uppercase; letter-spacing: 0.6px; }
+        .proj-chip-val { font-size: 18px; font-weight: 300; letter-spacing: -0.5px; margin-top: 5px; }
+        .proj-chip-sub { font-size: 10.5px; color: var(--label3); margin-top: 2px; }
+
         /* ── Planning: budgets ── */
         .budget-row { display: flex; align-items: center; gap: 12px; padding: 13px 0; border-bottom: 1px solid var(--sep); }
         .budget-row:last-child { border-bottom: none; }
@@ -756,10 +771,10 @@
                     <div class="kpi-sub" id="kpiExpenseSub">—</div>
                 </div>
                 <div class="kpi-card peach">
-                    <div class="kpi-icon amber">%</div>
-                    <div class="kpi-label">Savings Rate</div>
-                    <div class="kpi-value" id="kpiSavings">0%</div>
-                    <div class="kpi-sub" id="kpiSavingsSub">Of monthly income</div>
+                    <div class="kpi-icon amber">◎</div>
+                    <div class="kpi-label">Saved this month</div>
+                    <div class="kpi-value" id="kpiSavings">$0</div>
+                    <div class="kpi-sub" id="kpiSavingsSub">vs target</div>
                 </div>
             </div>
 
@@ -908,6 +923,29 @@
 
         <!-- ── Plan & Budget ── -->
         <section class="page" id="page-plan">
+            <div class="card" style="margin-bottom:20px">
+                <div class="card-header">
+                    <h2>Savings plan</h2>
+                    <div class="card-header-right">
+                        <span class="count-badge" id="savingsStatusBadge">—</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p style="font-size:12px;color:var(--label3);margin-bottom:14px">Update your total savings whenever you check your accounts — the tracker works out how much you saved and whether you hit your monthly target. No need to log daily spending.</p>
+                    <div class="savings-inputs">
+                        <div class="fg" style="margin-bottom:0">
+                            <label>Current savings (update monthly)</label>
+                            <input type="number" class="finput" id="savingsBalanceInput" step="100" min="0" onchange="setSavingsBalance(this.value)">
+                        </div>
+                        <div class="fg" style="margin-bottom:0">
+                            <label>Monthly target</label>
+                            <input type="number" class="finput" id="savingsTargetInput" step="100" min="0" onchange="setSavingsTarget(this.value)">
+                        </div>
+                    </div>
+                    <div id="savingsStatus"></div>
+                </div>
+            </div>
+
             <div class="kpi-grid">
                 <div class="kpi-card lime">
                     <div class="kpi-icon green">✓</div>
@@ -1142,7 +1180,8 @@ const DEFAULT_DATA = {
     goals: [],
     budgets: {},
     recurring: [],
-    settings: { currency: 'USD', theme: 'dark' }
+    savings: [],
+    settings: { currency: 'USD', theme: 'dark', savingsTarget: 5000, savingsBalance: 61143 }
 };
 const CATEGORIES = {
     expense: [
@@ -1187,7 +1226,7 @@ function loadData() {
         const raw = localStorage.getItem(STORAGE_KEY);
         if (!raw) return structuredClone(DEFAULT_DATA);
         const parsed = JSON.parse(raw);
-        return { ...structuredClone(DEFAULT_DATA), ...parsed };
+        return { ...structuredClone(DEFAULT_DATA), ...parsed, settings: { ...DEFAULT_DATA.settings, ...(parsed.settings || {}) } };
     } catch { return structuredClone(DEFAULT_DATA); }
 }
 function saveData() {
@@ -1292,8 +1331,11 @@ function safeToSpend() {
     const upcomingIncome = recurUpcoming('income').reduce((s, r) => s + Number(r.amount), 0);
     const upcomingBills = recurUpcoming('expense').reduce((s, r) => s + Number(r.amount), 0);
     const expectedIncome = incomeActual + upcomingIncome;
-    return { expectedIncome, incomeActual, upcomingIncome, spent, upcomingBills,
-             safe: expectedIncome - spent - upcomingBills };
+    const savingsTarget = Number(data.settings.savingsTarget) || 0;
+    const projectedSavings = expectedIncome - spent - upcomingBills;   // "save what's left"
+    return { expectedIncome, incomeActual, upcomingIncome, spent, upcomingBills, savingsTarget,
+             projectedSavings,
+             safe: projectedSavings - savingsTarget };                 // free to spend after reserving target
 }
 
 function budgetStatus() {
@@ -1376,7 +1418,143 @@ function renderPlan() {
 
     renderBudgets();
     renderRecurring();
+    renderSavings();
     renderPlanSummaryDash();
+}
+
+function savingsSeries() {
+    return [...data.savings].sort((a, b) => a.month.localeCompare(b.month));
+}
+
+function renderSavings() {
+    const series = savingsSeries();
+    const target = Number(data.settings.savingsTarget) || 0;
+    const currentBalance = series.length ? series[series.length - 1].balance : (Number(data.settings.savingsBalance) || 0);
+    document.getElementById('savingsTargetInput').value = target || '';
+    document.getElementById('savingsBalanceInput').value = currentBalance || '';
+
+    // Saved this month = change between the two most recent monthly snapshots
+    let savedThisMonth = null;
+    if (series.length >= 2) savedThisMonth = series[series.length - 1].balance - series[series.length - 2].balance;
+
+    const badge = document.getElementById('savingsStatusBadge');
+    let headline, cls = '';
+    if (savedThisMonth === null) {
+        badge.textContent = series.length ? 'Logged' : 'Start';
+        headline = series.length
+            ? `Starting balance recorded: <b>${fmt(currentBalance)}</b>. Update it again next month to track how much you saved.`
+            : `Enter your current savings to begin. Each month, just update the number — the tracker does the rest.`;
+    } else {
+        const onTrack = savedThisMonth >= target;
+        badge.textContent = target > 0 ? (onTrack ? 'On track' : 'Behind') : 'Logged';
+        if (savedThisMonth < 0) {
+            cls = 'behind';
+            headline = `Your savings dropped ${fmt(Math.abs(savedThisMonth))} since last update.`;
+        } else if (target <= 0) {
+            headline = `You saved <b>${fmt(savedThisMonth)}</b> since last update.`;
+        } else if (onTrack) {
+            cls = 'ahead';
+            headline = `You saved <b>${fmt(savedThisMonth)}</b> — ${fmt(savedThisMonth - target)} over your ${fmt(target)} target. 🎉`;
+        } else {
+            cls = 'behind';
+            headline = `You saved <b>${fmt(savedThisMonth)}</b> — ${fmt(target - savedThisMonth)} short of your ${fmt(target)} target.`;
+        }
+    }
+
+    const projHTML = [3, 6, 12].map(m => {
+        const future = currentBalance + target * m;
+        return `<div class="proj-chip">
+            <div class="proj-chip-label">In ${m} months</div>
+            <div class="proj-chip-val">${fmt(future)}</div>
+            <div class="proj-chip-sub">at ${fmt(target)}/mo</div>
+        </div>`;
+    }).join('');
+
+    const barPct = (target > 0 && savedThisMonth !== null) ? Math.max(0, Math.min(100, (savedThisMonth / target) * 100)) : 0;
+    const onTrackNow = savedThisMonth !== null && savedThisMonth >= target;
+
+    document.getElementById('savingsStatus').innerHTML = `
+        <div class="savings-headline ${cls}">${headline}</div>
+        ${(target > 0 && savedThisMonth !== null) ? `<div class="goal-track" style="margin-bottom:14px"><div class="goal-fill ${onTrackNow ? 'done' : ''}" style="width:${barPct}%"></div></div>` : ''}
+        ${savingsChartHTML(series)}
+        <div class="savings-proj">${projHTML}</div>
+        ${savingsHistoryHTML(series, target)}`;
+}
+
+function savingsChartHTML(series) {
+    if (series.length < 2) return '';
+    const vals = series.map(s => s.balance);
+    const min = Math.min(...vals), max = Math.max(...vals);
+    const range = (max - min) || 1;
+    const pad = 12, span = 100 - 2 * pad;
+    const pts = vals.map((v, i) => [(i / (vals.length - 1)) * 100, pad + (1 - (v - min) / range) * span]);
+    const line = pts.map((p, i) => `${i === 0 ? 'M' : 'L'}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ');
+    const area = `${line} L100,100 L0,100 Z`;
+    const last = pts[pts.length - 1];
+    return `<div class="trend-chart" style="height:120px;margin-bottom:6px">
+        <svg class="trend-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+            <defs><linearGradient id="svGrad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="rgba(205,255,61,0.4)"/>
+                <stop offset="100%" stop-color="rgba(205,255,61,0)"/>
+            </linearGradient></defs>
+            <path d="${area}" fill="url(#svGrad)"/>
+            <path class="trend-line" d="${line}"/>
+        </svg>
+        <div class="trend-dot" style="left:${last[0]}%;top:${last[1]}%"></div>
+    </div>
+    <div class="trend-axis" style="margin-bottom:16px">${series.map(s => `<span>${fmtMonth(s.month).split(' ')[0].slice(0, 3)}</span>`).join('')}</div>`;
+}
+
+function savingsHistoryHTML(series, target) {
+    if (series.length === 0) return '';
+    const rows = [...series].reverse().map((s, i, arr) => {
+        const prev = arr[i + 1];
+        const delta = prev ? s.balance - prev.balance : null;
+        let badge = '';
+        if (delta !== null) {
+            const ok = delta >= target;
+            badge = `<span class="recur-due ${delta < 0 ? 'pending' : ok ? 'logged' : 'soon'}">${delta >= 0 ? '+' : ''}${fmt(delta)}${target > 0 ? (ok ? ' ✓' : '') : ''}</span>`;
+        } else {
+            badge = `<span class="recur-due pending">Start</span>`;
+        }
+        return `<div class="upcoming-row">
+            <div><div class="recur-name">${fmtMonth(s.month)}</div></div>
+            <div style="display:flex;align-items:center;gap:10px">
+                ${badge}
+                <span style="font-weight:700;white-space:nowrap;min-width:90px;text-align:right">${fmt(s.balance)}</span>
+                <button class="row-btn del" onclick="deleteSavings('${s.month}')">×</button>
+            </div>
+        </div>`;
+    }).join('');
+    return `<div style="margin-top:18px;border-top:1px solid var(--sep);padding-top:14px">
+        <div style="font-size:11px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Monthly history</div>
+        ${rows}</div>`;
+}
+
+function setSavingsTarget(val) {
+    data.settings.savingsTarget = Math.max(0, parseFloat(val) || 0);
+    saveData();
+    renderPlan();
+    renderDashboard();
+}
+function setSavingsBalance(val) {
+    const bal = Math.max(0, parseFloat(val) || 0);
+    const key = currentMonthKey();
+    const existing = data.savings.find(s => s.month === key);
+    if (existing) existing.balance = bal;
+    else data.savings.push({ month: key, balance: bal });
+    data.settings.savingsBalance = bal;
+    saveData();
+    renderPlan();
+    renderDashboard();
+    toast('Savings updated');
+}
+function deleteSavings(month) {
+    data.savings = data.savings.filter(s => s.month !== month);
+    if (data.savings.length) data.settings.savingsBalance = savingsSeries().slice(-1)[0].balance;
+    saveData();
+    renderPlan();
+    renderDashboard();
 }
 
 function renderBudgets() {
@@ -1461,12 +1639,16 @@ function goalPaceHTML(g, pct, done, remaining) {
 function renderDashboard() {
     const ch = monthChange();
     const inc = ch.income.cur, exp = ch.expense.cur;
-    const savings = inc > 0 ? ((inc - exp) / inc) * 100 : 0;
 
     document.getElementById('kpiNetWorth').textContent = fmt(netWorth());
     document.getElementById('kpiIncome').textContent = fmt(inc);
     document.getElementById('kpiExpense').textContent = fmt(exp);
-    document.getElementById('kpiSavings').textContent = savings.toFixed(0) + '%';
+
+    // Saved this month — from monthly savings snapshots
+    const series = savingsSeries();
+    const target = Number(data.settings.savingsTarget) || 0;
+    const savedThisMonth = series.length >= 2 ? series[series.length - 1].balance - series[series.length - 2].balance : null;
+    document.getElementById('kpiSavings').textContent = savedThisMonth === null ? '—' : fmt(savedThisMonth);
 
     const incDelta = ch.income.prev > 0 ? ((ch.income.cur - ch.income.prev) / ch.income.prev) * 100 : 0;
     const expDelta = ch.expense.prev > 0 ? ((ch.expense.cur - ch.expense.prev) / ch.expense.prev) * 100 : 0;
@@ -1474,8 +1656,9 @@ function renderDashboard() {
         ? `${incDelta > 0 ? '+' : ''}${incDelta.toFixed(0)}% vs last month` : 'No prior month data';
     document.getElementById('kpiExpenseSub').textContent = ch.expense.prev > 0
         ? `${expDelta > 0 ? '+' : ''}${expDelta.toFixed(0)}% vs last month` : 'No prior month data';
-    document.getElementById('kpiSavingsSub').textContent = inc > 0
-        ? fmt(inc - exp) + ' saved this month' : 'Add income to compute';
+    document.getElementById('kpiSavingsSub').textContent = savedThisMonth === null
+        ? (series.length ? 'Update next month to track' : 'Log savings on Plan tab')
+        : (target > 0 ? (savedThisMonth >= target ? `Hit ${fmt(target)} target ✓` : `${fmt(target - savedThisMonth)} below target`) : 'vs target');
 
     // Recent transactions (last 5)
     const recent = [...data.transactions].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 5);
