@@ -543,6 +543,15 @@
         }
         .donut-svg { width: 100%; height: 100%; transform: rotate(-90deg); }
         .donut-svg circle { fill: none; stroke-width: 18; }
+        .donut-ring {
+            width: 100%; height: 100%; border-radius: 50%;
+            -webkit-mask: radial-gradient(transparent 57%, #000 58%);
+            mask: radial-gradient(transparent 57%, #000 58%);
+        }
+        .donut-chart {
+            display: flex; gap: 22px; align-items: center;
+            flex-wrap: wrap; margin-bottom: 18px;
+        }
         .donut-hole {
             position: absolute; inset: 0;
             display: flex; flex-direction: column;
@@ -1096,17 +1105,37 @@ function renderCatBreakdown() {
         el.innerHTML = `<div class="empty" style="padding:20px"><p style="color:var(--label3);font-size:12px">No expenses this month.</p></div>`;
         return;
     }
-    el.innerHTML = `<div class="cat-list">` + entries.map(([cat, val]) => {
+    let acc = 0;
+    const segments = entries.map(([cat, val]) => {
+        const start = (acc / total) * 100;
+        acc += val;
+        const end = (acc / total) * 100;
+        return `${catColor('expense', cat)} ${start}% ${end}%`;
+    }).join(', ');
+
+    const bars = entries.map(([cat, val]) => {
         const pct = (val / total) * 100;
         const color = catColor('expense', cat);
+        const grad = `linear-gradient(90deg, ${color}, color-mix(in srgb, ${color} 55%, #ffffff))`;
         return `<div class="cat-row">
             <span class="cat-row-dot" style="background:${color}"></span>
             <span class="cat-row-name">${cat}</span>
-            <div class="cat-row-bar"><div class="cat-row-fill" style="width:${pct}%;background:${color}"></div></div>
+            <div class="cat-row-bar"><div class="cat-row-fill" style="width:${pct}%;background:${grad}"></div></div>
             <span class="cat-row-val">${fmt(val)}</span>
             <span class="cat-row-pct">${pct.toFixed(0)}%</span>
         </div>`;
-    }).join('') + `</div>`;
+    }).join('');
+
+    el.innerHTML = `<div class="donut-chart">
+            <div class="donut-wrap">
+                <div class="donut-ring" style="background: conic-gradient(${segments})"></div>
+                <div class="donut-hole">
+                    <div class="donut-total">${fmt(total)}</div>
+                    <div class="donut-label">Spent</div>
+                </div>
+            </div>
+            <div class="cat-list" style="flex:1;min-width:180px">${bars}</div>
+        </div>`;
 }
 
 function renderDashGoals() {
