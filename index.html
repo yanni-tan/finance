@@ -220,7 +220,7 @@ tbody tr:hover .row-acts{opacity:1}
       </div>
     </div>
 
-    <div class="grid2">
+    <div class="grid2" style="margin-bottom:18px">
       <div class="card">
         <div class="card-hdr">
           <h2>Spendable breakdown</h2>
@@ -228,32 +228,27 @@ tbody tr:hover .row-acts{opacity:1}
         </div>
         <div class="card-body" id="formulaBody"></div>
       </div>
-      <div class="card">
-        <div class="card-hdr">
-          <h2>Savings goal</h2>
-          <div class="card-hdr-right">
-            <div id="goalBadge" style="display:inline"></div>
-            <button class="row-btn" onclick="openSettings()">Edit →</button>
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <div class="card">
+          <div class="card-hdr">
+            <h2>Savings goal</h2>
+            <div class="card-hdr-right">
+              <div id="goalBadge" style="display:inline"></div>
+              <button class="row-btn" onclick="openSettings()">Edit →</button>
+            </div>
           </div>
+          <div class="card-body" id="goalBody"></div>
         </div>
-        <div class="card-body" id="goalBody"></div>
-      </div>
-    </div>
-
-    <div class="grid2">
-      <div class="card">
-        <div class="card-hdr">
-          <h2>Monthly bills</h2>
-          <div class="card-hdr-right">
-            <span id="billTotal" style="font-size:13px;font-weight:700;color:var(--red)"></span>
-            <button class="row-btn" onclick="openBillModal()">+ Add</button>
+        <div class="card">
+          <div class="card-hdr">
+            <h2>Monthly bills</h2>
+            <div class="card-hdr-right">
+              <span id="billTotal" style="font-size:13px;font-weight:700;color:var(--red)"></span>
+              <button class="row-btn" onclick="openBillModal()">+ Add</button>
+            </div>
           </div>
+          <div class="card-body" id="billList"></div>
         </div>
-        <div class="card-body" id="billList"></div>
-      </div>
-      <div class="card">
-        <div class="card-hdr"><h2>Bill summary</h2></div>
-        <div class="card-body" id="billSummary"></div>
       </div>
     </div>
   </section>
@@ -488,21 +483,17 @@ function renderFormula() {
   const s = data.settings;
   const salary = Number(s.salary||0);
   const goal = Number(s.savingsGoal||0);
-  const bills = data.bills;
   const billsTotal = totalBills();
   const sp = spendable();
 
-  if (salary === 0 && bills.length === 0 && goal === 0) {
+  if (salary === 0 && data.bills.length === 0 && goal === 0) {
     document.getElementById('formulaBody').innerHTML = `<div class="empty" style="padding:30px 16px"><div class="empty-icon">⚙️</div><h3>Not set up yet</h3><p>Add your salary, bills, and savings goal.</p><button class="btn btn-primary" onclick="openSettings()" style="flex:0;display:inline-block">Set up →</button></div>`;
     return;
   }
 
   let rows = `<div class="formula-row"><span class="formula-name">Take-home salary</span><span class="formula-val pos">${fmt(salary)}</span></div>`;
-  if (bills.length > 0) {
-    rows += `<div class="formula-row"><span class="formula-name">− Total bills</span><span class="formula-val neg">−${fmt(billsTotal)}</span></div>`;
-    bills.forEach(b => {
-      rows += `<div class="formula-row sub"><span class="formula-name">${esc(b.name)}</span><span class="formula-val" style="color:var(--label3);font-size:12px">−${fmt(Number(b.amount))}</span></div>`;
-    });
+  if (billsTotal > 0) {
+    rows += `<div class="formula-row"><span class="formula-name">− Monthly bills</span><span class="formula-val neg">−${fmt(billsTotal)}</span></div>`;
   }
   if (goal > 0) {
     rows += `<div class="formula-row"><span class="formula-name">− Savings goal</span><span class="formula-val neg">−${fmt(goal)}</span></div>`;
@@ -585,7 +576,7 @@ function renderBills() {
   document.getElementById('billTotal').textContent = bills.length ? `Total: ${fmt(total)}/mo` : '';
 
   if (bills.length === 0) {
-    document.getElementById('billList').innerHTML = `<div class="empty"><div class="empty-icon">📄</div><h3>No bills added</h3><p>Add your regular monthly expenses — rent, subscriptions, utilities.</p></div>`;
+    document.getElementById('billList').innerHTML = `<div class="empty" style="padding:30px 16px"><div class="empty-icon">📄</div><h3>No bills added</h3><p>Add your regular monthly expenses — rent, subscriptions, utilities.</p></div>`;
   } else {
     document.getElementById('billList').innerHTML = bills.map(b => `
       <div class="bill-row">
@@ -597,22 +588,6 @@ function renderBills() {
         </div>
       </div>`).join('');
   }
-
-  // Summary
-  const salary = Number(data.settings.salary||0);
-  const goal = Number(data.settings.savingsGoal||0);
-  const sp = spendable();
-  let summaryHTML = '';
-  if (salary > 0) {
-    summaryHTML = `
-      <div class="formula-row"><span class="formula-name">Salary</span><span class="formula-val pos">${fmt(salary)}</span></div>
-      <div class="formula-row"><span class="formula-name">Bills</span><span class="formula-val neg">−${fmt(total)}</span></div>
-      ${goal>0?`<div class="formula-row"><span class="formula-name">Savings goal</span><span class="formula-val neg">−${fmt(goal)}</span></div>`:''}
-      <div class="formula-row total"><span>Spendable</span><span class="${sp>=0?'pos':'neg'}">${fmt(sp)}</span></div>`;
-  } else {
-    summaryHTML = `<div style="font-size:12.5px;color:var(--label3)">Set your salary in Settings to see the full breakdown.</div>`;
-  }
-  document.getElementById('billSummary').innerHTML = summaryHTML;
 }
 
 function renderAll() {
