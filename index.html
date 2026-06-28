@@ -188,8 +188,9 @@ tbody tr:hover .row-acts{opacity:1}
 <main class="main">
   <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
     <div>
-      <h1 id="ph" style="font-size:32px;font-weight:300;letter-spacing:-1px"></h1>
-      <div id="ph-sub" style="font-size:13px;color:var(--label3);margin-top:6px"></div>
+      <div id="ph-label" style="font-size:12px;font-weight:500;color:var(--label3);margin-bottom:6px"></div>
+      <h1 id="ph" style="font-size:30px;font-weight:400;letter-spacing:-0.5px;display:flex;align-items:center;gap:10px"></h1>
+      <div id="ph-sub" style="font-size:12px;color:var(--label3);margin-top:5px"></div>
     </div>
     <button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
   </div>
@@ -318,6 +319,10 @@ tbody tr:hover .row-acts{opacity:1}
       <button class="modal-x" onclick="closeModal('settingsModal')">×</button>
     </div>
     <div class="fg">
+      <label>Your name</label>
+      <input type="text" class="finput" id="setName" placeholder="e.g. Yanni">
+    </div>
+    <div class="fg">
       <label>Currency</label>
       <select class="fselect" id="setCurrency">
         <option value="SGD">SGD</option><option value="USD">USD</option>
@@ -352,7 +357,7 @@ tbody tr:hover .row-acts{opacity:1}
 // ── State ──
 const KEY = 'finance_v2';
 const DEF = {
-  settings: { currency: 'SGD', theme: 'dark', grossSalary: 0, salary: 0, savingsGoal: 0 },
+  settings: { currency: 'SGD', theme: 'dark', name: '', grossSalary: 0, salary: 0, savingsGoal: 0 },
   savings: [],   // [{month:'YYYY-MM', balance:0}]
   bills: []      // [{id, name, amount}]
 };
@@ -407,10 +412,20 @@ function savedThisMonth() {
 
 // ── Render: Dashboard ──
 function renderDashboard() {
-  const hour = new Date().getHours();
-  const greet = hour<5?'Good night.':hour<12?'Good morning.':hour<18?'Good afternoon.':'Good evening.';
-  document.getElementById('ph').textContent = greet;
-  document.getElementById('ph-sub').textContent = 'Your financial snapshot.';
+  const now = new Date();
+  const hour = now.getHours();
+  const name = data.settings.name ? `, ${data.settings.name}` : '';
+  const greets = [
+    { range: [0,5],  emoji: '🦉', text: `Can't sleep${name}?` },
+    { range: [5,12], emoji: '☀️', text: `Good morning${name}!` },
+    { range: [12,18],emoji: '👋', text: `Good afternoon${name}!` },
+    { range: [18,24],emoji: '🌙', text: `Good evening${name}!` },
+  ];
+  const g = greets.find(x => hour >= x.range[0] && hour < x.range[1]);
+  const dateStr = now.toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric' });
+  document.getElementById('ph-label').textContent = 'Welcome back!';
+  document.getElementById('ph').innerHTML = `<span>${g.emoji}</span> ${g.text}`;
+  document.getElementById('ph-sub').textContent = dateStr;
 
   const cur = latestSavings();
   const prev = prevSavings();
@@ -690,6 +705,7 @@ function updateTakeHome() {
   document.getElementById('takeHomePreview').style.color = gross > 0 ? 'var(--green)' : 'var(--label3)';
 }
 function openSettings() {
+  document.getElementById('setName').value = data.settings.name||'';
   document.getElementById('setCurrency').value = data.settings.currency||'SGD';
   document.getElementById('setGrossSalary').value = data.settings.grossSalary||'';
   document.getElementById('setGoal').value = data.settings.savingsGoal||'';
@@ -697,6 +713,7 @@ function openSettings() {
   document.getElementById('settingsModal').classList.add('open');
 }
 function saveSettings() {
+  data.settings.name = document.getElementById('setName').value.trim();
   data.settings.currency = document.getElementById('setCurrency').value;
   data.settings.grossSalary = parseFloat(document.getElementById('setGrossSalary').value)||0;
   data.settings.salary = Math.round(data.settings.grossSalary * 0.8 * 100) / 100;
