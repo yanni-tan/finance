@@ -226,7 +226,10 @@ tbody tr:hover .row-acts{opacity:1}
       <div class="card">
         <div class="card-hdr">
           <h2>Savings goal</h2>
-          <div class="card-hdr-right" id="goalBadge"></div>
+          <div class="card-hdr-right">
+            <div id="goalBadge" style="display:inline"></div>
+            <button class="row-btn" onclick="openSettings()">Edit →</button>
+          </div>
         </div>
         <div class="card-body" id="goalBody"></div>
       </div>
