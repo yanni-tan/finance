@@ -1,1603 +1,727 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Finance Tracker</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&display=swap" rel="stylesheet">
-    <style>
-        :root {
-            --sidebar: #ffffff;
-            --sidebar-border: rgba(15,23,42,0.06);
-            --sidebar-text: #6b7280;
-            --sidebar-text-active: #1a1d27;
-            --bg: #f4eef1;
-            --surface: #ffffff;
-            --surface2: #f6eef2;
-            --label: #1a1d27;
-            --label2: #5b6472;
-            --label3: #9aa1ad;
-            --sep: #ece4e8;
-            --accent: #ec4899;
-            --accent-dim: rgba(236,72,153,0.18);
-            --navy: #2a1822;
-            --green: #22c55e;
-            --red: #ef4444;
-            --green-bg: rgba(34,197,94,0.1);
-            --red-bg: rgba(239,68,68,0.1);
-            --blue: #3b82f6;
-            --amber: #f59e0b;
-            --purple: #8b5cf6;
-            --pink: #f472b6;
-            --teal: #14b8a6;
-            --orange: #f97316;
-            --radius: 20px;
-            --radius-sm: 12px;
-            --shadow: 0 1px 2px rgba(16,24,40,0.04), 0 10px 30px rgba(16,24,40,0.07);
-            --shadow-sm: 0 1px 2px rgba(16,24,40,0.05);
-            --sidebar-w: 240px;
-        }
-        [data-theme="dark"] {
-            --sidebar:#100c0e;--sidebar-border:rgba(255,255,255,0.05);--sidebar-text:#8c7d84;--sidebar-text-active:#f7f3f5;
-            --bg:#0c0809;--surface:#171216;--surface2:#221b1f;--label:#f5f0f3;--label2:#a5979d;--label3:#6a5e64;
-            --sep:#2a2226;--shadow:0 1px 3px rgba(0,0,0,0.4),0 12px 40px rgba(0,0,0,0.55);
-            --accent:#f472b6;--accent-dim:rgba(244,114,182,0.16);--pink:#f472b6;--orange:#fb923c;
-        }
-        [data-theme="dark"] .brand-icon { background: var(--accent); color: var(--navy); }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Finance</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f2ecef; --surface:#fff; --surface2:#f7f1f4; --sep:#ece5e9;
+  --label:#1a1520; --label2:#6b5e66; --label3:#a89aa2;
+  --accent:#e8388a; --green:#22c55e; --red:#ef4444;
+  --green-bg:rgba(34,197,94,.1); --red-bg:rgba(239,68,68,.1);
+  --radius:18px; --radius-sm:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 28px rgba(16,24,40,.08);
+}
+[data-theme=dark]{
+  --bg:#0b0709; --surface:#151013; --surface2:#1e181b; --sep:#261e21;
+  --label:#f5f0f3; --label2:#9e8e96; --label3:#6a5d63;
+  --accent:#f472b6; --shadow:0 1px 3px rgba(0,0,0,.5),0 10px 36px rgba(0,0,0,.6);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',-apple-system,sans-serif;font-weight:300;background:var(--bg);color:var(--label);-webkit-font-smoothing:antialiased;min-height:100vh}
 
-        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-        body {
-            font-family: 'DM Sans', -apple-system, "Helvetica Neue", sans-serif;
-            font-weight: 300;
-            background: var(--bg);
-            color: var(--label);
-            -webkit-font-smoothing: antialiased;
-            display: flex;
-            min-height: 100vh;
-        }
+/* ── Layout ── */
+.shell{display:flex;min-height:100vh}
+.side{width:220px;background:var(--surface);border-right:1px solid var(--sep);display:flex;flex-direction:column;position:fixed;top:0;left:0;height:100vh;z-index:20}
+.main{margin-left:220px;flex:1;padding:32px 44px 80px}
+@media(max-width:680px){.side{transform:translateX(-100%);transition:transform .25s}.side.open{transform:translateX(0)}.main{margin-left:0;padding:20px 18px 60px}}
 
-        /* ── Sidebar ── */
-        .sidebar {
-            width: var(--sidebar-w);
-            background: var(--sidebar);
-            position: fixed; top: 0; left: 0;
-            height: 100vh;
-            display: flex; flex-direction: column;
-            z-index: 20;
-            border-right: 1px solid var(--sidebar-border);
-        }
-        .sidebar-brand {
-            display: flex; align-items: center; gap: 10px;
-            padding: 28px 20px 24px;
-            border-bottom: 1px solid var(--sidebar-border);
-        }
-        .brand-icon {
-            width: 34px; height: 34px;
-            background: var(--navy); border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 16px; font-weight: 800; color: var(--accent);
-        }
-        .brand-name { font-size: 15px; font-weight: 400; color: var(--sidebar-text-active); letter-spacing: -0.2px; }
-        .sidebar-nav { flex: 1; padding: 20px 12px; display: flex; flex-direction: column; gap: 2px; }
-        .nav-section {
-            font-size: 10px; font-weight: 700; color: var(--sidebar-text);
-            text-transform: uppercase; letter-spacing: 1px;
-            padding: 0 8px; margin: 8px 0 6px;
-        }
-        .nav-item {
-            display: flex; align-items: center; gap: 10px;
-            padding: 9px 12px; border-radius: 10px;
-            border: none; background: transparent;
-            color: var(--sidebar-text);
-            font-size: 13.5px; font-weight: 500;
-            cursor: pointer; width: 100%; text-align: left;
-            font-family: inherit; transition: all 0.15s;
-        }
-        .nav-item:hover:not(.active) { background: rgba(0,0,0,0.05); color: var(--sidebar-text-active); }
-        .nav-item.active { background: var(--accent); color: var(--navy); font-weight: 600; }
-        [data-theme="dark"] .nav-item:hover:not(.active) { background: rgba(255,255,255,0.05); }
-        .nav-icon { width: 16px; flex-shrink: 0; opacity: 0.9; }
-        .nav-item.active .nav-icon { opacity: 1; }
-        .sidebar-footer { padding: 16px 12px 24px; border-top: 1px solid var(--sidebar-border); }
-        .sidebar-add {
-            display: flex; align-items: center; justify-content: center; gap: 6px;
-            width: 100%; padding: 10px;
-            background: var(--accent); color: var(--navy);
-            border: none; border-radius: var(--radius-sm);
-            font-size: 13.5px; font-weight: 700;
-            cursor: pointer; font-family: inherit; transition: opacity 0.15s;
-        }
-        .sidebar-add:hover { opacity: 0.88; }
-        .sidebar-utils { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
-        .util-btn {
-            flex: 1; min-width: calc(50% - 3px); padding: 7px;
-            background: transparent;
-            border: 1px solid var(--sidebar-border);
-            border-radius: var(--radius-sm);
-            color: var(--sidebar-text);
-            font-size: 12px; font-weight: 500;
-            cursor: pointer; font-family: inherit; transition: all 0.15s;
-        }
-        .util-btn:hover { background: rgba(0,0,0,0.05); color: var(--sidebar-text-active); }
-        [data-theme="dark"] .util-btn:hover { background: rgba(255,255,255,0.05); }
+/* ── Sidebar ── */
+.brand{display:flex;align-items:center;gap:10px;padding:26px 18px 22px;border-bottom:1px solid var(--sep)}
+.brand-mark{width:32px;height:32px;background:var(--accent);border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;color:#fff}
+.brand-name{font-size:14px;font-weight:500;color:var(--label)}
+.nav{flex:1;padding:16px 10px;display:flex;flex-direction:column;gap:2px}
+.nav-btn{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:10px;border:none;background:transparent;color:var(--label2);font-size:13.5px;font-weight:500;cursor:pointer;width:100%;text-align:left;font-family:inherit;transition:all .15s}
+.nav-btn:hover{background:var(--surface2);color:var(--label)}
+.nav-btn.active{background:var(--accent);color:#fff;font-weight:600}
+.nav-icon{width:15px;flex-shrink:0}
+.side-foot{padding:14px 10px 22px;border-top:1px solid var(--sep);display:flex;flex-direction:column;gap:6px}
+.side-action{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;transition:opacity .15s}
+.side-action:hover{opacity:.85}
+.side-util{display:flex;gap:6px}
+.util-btn{flex:1;padding:8px 6px;background:transparent;border:1px solid var(--sep);border-radius:var(--radius-sm);color:var(--label3);font-size:11.5px;font-weight:500;cursor:pointer;font-family:inherit;transition:all .15s}
+.util-btn:hover{color:var(--label);border-color:var(--label3)}
 
-        /* ── Main ── */
-        .main { margin-left: var(--sidebar-w); flex: 1; padding: 24px 48px 60px; min-height: 100vh; min-width: 0; }
-        .page-header {
-            display: flex; align-items: flex-start; justify-content: space-between;
-            margin-bottom: 28px; gap: 20px; flex-wrap: wrap;
-        }
-        .greeting { font-size: 36px; font-weight: 300; letter-spacing: -1px; line-height: 1.1; }
-        .greeting-sub { font-size: 14px; color: var(--label3); margin-top: 10px; }
-        .header-right { display: flex; align-items: center; gap: 10px; }
-        .icon-btn {
-            width: 36px; height: 36px; border-radius: 50%;
-            background: var(--surface); border: 1px solid var(--sep);
-            cursor: pointer; display: flex; align-items: center; justify-content: center;
-            box-shadow: var(--shadow-sm); transition: opacity .15s;
-        }
-        .icon-btn:hover { opacity: 0.8; }
-        .icon-btn svg { width: 15px; height: 15px; fill: none; stroke: var(--label2); stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+/* ── Page ── */
+.page{display:none}.page.active{display:block}
+.ph{margin-bottom:28px}
+.ph h1{font-size:32px;font-weight:300;letter-spacing:-1px;line-height:1.1}
+.ph-sub{font-size:13px;color:var(--label3);margin-top:8px}
 
-        /* ── KPI Grid ── */
-        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin-bottom: 24px; }
-        .kpi-card {
-            background: var(--surface);
-            border-radius: var(--radius); padding: 22px 24px 20px;
-            box-shadow: var(--shadow); position: relative; overflow: hidden;
-        }
-        .kpi-card.total { background: linear-gradient(145deg, #be185d 0%, #f43f5e 52%, #fb923c 100%); color: #fff; }
-        .kpi-card.lime { background: linear-gradient(145deg, #4ade80 0%, #86efac 100%); color: var(--navy); }
-        .kpi-card.peach { background: linear-gradient(145deg, #fbcfe8 0%, #ffe4e6 100%); color: var(--navy); }
-        .kpi-card.pink { background: linear-gradient(145deg, #db2777 0%, #f472b6 100%); color: #fff; }
-        .kpi-card.total::before, .kpi-card.lime::before, .kpi-card.peach::before, .kpi-card.pink::before {
-            content: ""; position: absolute; top: -40%; right: -20%;
-            width: 180px; height: 180px; border-radius: 50%;
-            background: radial-gradient(circle, rgba(255,255,255,0.32), transparent 70%);
-            pointer-events: none;
-        }
-        .kpi-card.lime::before, .kpi-card.peach::before { background: radial-gradient(circle, rgba(255,255,255,0.45), transparent 70%); }
-        .kpi-card.total > *, .kpi-card.lime > *, .kpi-card.peach > *, .kpi-card.pink > * { position: relative; z-index: 1; }
-        .kpi-icon { width: 32px; height: 32px; border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 14px; margin-bottom: 16px; }
-        .kpi-icon.green  { background: rgba(34,197,94,0.12); color: var(--green); }
-        .kpi-icon.blue   { background: rgba(59,130,246,0.12); }
-        .kpi-icon.red    { background: rgba(239,68,68,0.12); color: var(--red); }
-        .kpi-icon.amber  { background: rgba(245,158,11,0.12); color: var(--amber); }
-        .kpi-icon.total  { background: rgba(255,255,255,0.1); }
-        .kpi-card.lime .kpi-icon  { background: rgba(29,34,48,0.12); color: var(--navy); }
-        .kpi-card.peach .kpi-icon { background: rgba(29,34,48,0.14); color: var(--navy); }
-        .kpi-card.pink .kpi-icon  { background: rgba(255,255,255,0.18); color: #fff; }
-        .kpi-label { font-size: 10px; font-weight: 600; color: var(--label3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-        .kpi-card.total .kpi-label { color: rgba(255,255,255,0.5); }
-        .kpi-card.pink .kpi-label  { color: rgba(255,255,255,0.65); }
-        .kpi-card.lime .kpi-label  { color: rgba(29,34,48,0.55); }
-        .kpi-card.peach .kpi-label { color: rgba(29,34,48,0.5); }
-        .kpi-value { font-size: 30px; font-weight: 300; letter-spacing: -1px; line-height: 1; margin-bottom: 10px; }
-        .kpi-card.total .kpi-value { color: #fff; }
-        .kpi-card.pink .kpi-value { color: #fff; }
-        .kpi-card.lime .kpi-value, .kpi-card.peach .kpi-value { color: var(--navy); }
-        .kpi-sub { font-size: 11px; color: var(--label3); margin-top: 4px; }
-        .kpi-card.total .kpi-sub { color: rgba(255,255,255,0.4); }
-        .kpi-card.pink .kpi-sub  { color: rgba(255,255,255,0.6); }
-        .kpi-card.lime .kpi-sub  { color: rgba(29,34,48,0.55); }
-        .kpi-card.peach .kpi-sub { color: rgba(29,34,48,0.5); }
+/* ── KPI row ── */
+.kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:var(--surface);border-radius:var(--radius);padding:22px 22px 18px;box-shadow:var(--shadow);position:relative;overflow:hidden}
+.kpi.accent{background:linear-gradient(140deg,#be185d,#f43f5e 55%,#fb923c)}
+.kpi.green-card{background:linear-gradient(140deg,#16a34a,#4ade80)}
+.kpi.plain{background:var(--surface)}
+.kpi::after{content:"";position:absolute;top:-50%;right:-20%;width:160px;height:160px;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.25),transparent 70%);pointer-events:none}
+.kpi>*{position:relative;z-index:1}
+.kpi-lbl{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;margin-bottom:10px}
+.kpi.accent .kpi-lbl,.kpi.green-card .kpi-lbl{color:rgba(255,255,255,.55)}
+.kpi.plain .kpi-lbl{color:var(--label3)}
+.kpi-val{font-size:32px;font-weight:300;letter-spacing:-1.2px;line-height:1}
+.kpi.accent .kpi-val,.kpi.green-card .kpi-val{color:#fff}
+.kpi-sub{font-size:11px;margin-top:8px}
+.kpi.accent .kpi-sub,.kpi.green-card .kpi-sub{color:rgba(255,255,255,.5)}
+.kpi.plain .kpi-sub{color:var(--label3)}
+.delta{display:inline-flex;align-items:center;gap:3px;padding:3px 9px;border-radius:20px;font-size:11px;font-weight:700;margin-top:8px}
+.delta.pos{background:var(--green-bg);color:var(--green)}
+.delta.neg{background:var(--red-bg);color:var(--red)}
+.delta.none{background:var(--surface2);color:var(--label3)}
 
-        /* ── Card ── */
-        .card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; }
-        .card-header { display: flex; align-items: center; justify-content: space-between; padding: 18px 22px; border-bottom: 1px solid var(--sep); gap: 12px; flex-wrap: wrap; }
-        .card-header h2 { font-size: 15px; font-weight: 600; }
-        .card-header-right { display: flex; align-items: center; gap: 8px; }
-        .count-badge { font-size: 12px; color: var(--label2); background: var(--surface2); padding: 2px 9px; border-radius: 20px; border: 1px solid var(--sep); }
-        .card-body { padding: 22px; }
-        .content-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 20px; align-items: start; }
-        @media (max-width: 1100px) { .content-grid { grid-template-columns: 1fr; } }
+/* ── Cards ── */
+.grid2{display:grid;grid-template-columns:1.4fr 1fr;gap:16px;align-items:start;margin-bottom:18px}
+@media(max-width:900px){.grid2{grid-template-columns:1fr}}
+.card{background:var(--surface);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+.card-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid var(--sep);gap:12px}
+.card-hdr h2{font-size:14px;font-weight:600}
+.card-body{padding:20px}
+.card-hdr-right{display:flex;align-items:center;gap:8px}
 
-        /* ── Table ── */
-        table { width: 100%; border-collapse: collapse; font-size: 13px; }
-        thead th { padding: 10px 16px; text-align: left; font-size: 10.5px; font-weight: 700; color: var(--label3); text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid var(--sep); white-space: nowrap; }
-        th.r, td.r { text-align: right; }
-        tbody tr { border-bottom: 1px solid var(--sep); transition: background .1s; }
-        tbody tr:last-child { border-bottom: none; }
-        tbody tr:hover { background: var(--surface2); }
-        tbody td { padding: 12px 16px; vertical-align: middle; }
-        .acct-type { display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 700; letter-spacing: 0.3px; }
-        .acct-type.asset { background: rgba(59,130,246,0.12); color: var(--blue); }
-        .acct-type.liability { background: rgba(245,158,11,0.12); color: var(--amber); }
-        .pos { color: var(--green); }
-        .neg { color: var(--red); }
-        .row-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; justify-content: flex-end; }
-        tbody tr:hover .row-actions { opacity: 1; }
-        .row-btn { padding: 3px 9px; font-size: 11px; font-weight: 500; border-radius: 6px; border: 1px solid var(--sep); background: var(--surface); color: var(--label2); cursor: pointer; transition: all .1s; font-family: inherit; }
-        .row-btn:hover { color: var(--label); border-color: var(--label3); }
-        .row-btn.del:hover { color: var(--red); border-color: var(--red); background: var(--red-bg); }
+/* ── Formula breakdown ── */
+.formula-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--sep);font-size:13px}
+.formula-row:last-child{border-bottom:none}
+.formula-row.total{font-size:15px;font-weight:700;padding-top:14px;margin-top:4px;border-top:2px solid var(--sep);border-bottom:none}
+.formula-row.sub .formula-name{font-size:12px;color:var(--label3);padding-left:14px}
+.formula-name{color:var(--label2)}
+.formula-val{font-weight:600}
 
-        /* ── Empty ── */
-        .empty { text-align: center; padding: 60px 20px; }
-        .empty-icon { font-size: 40px; margin-bottom: 12px; opacity: 0.3; }
-        .empty h3 { font-size: 16px; font-weight: 600; margin-bottom: 5px; }
-        .empty p { font-size: 13px; color: var(--label2); margin-bottom: 20px; }
+/* ── Goal bar ── */
+.goal-bar-wrap{margin:14px 0 8px}
+.goal-bar-track{width:100%;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden}
+.goal-bar-fill{height:100%;border-radius:5px;transition:width .4s;background:linear-gradient(90deg,#4ade80,#86efac)}
+.goal-bar-fill.behind{background:linear-gradient(90deg,#f97316,#fb923c)}
+.goal-bar-fill.done{background:linear-gradient(90deg,#16a34a,#22c55e)}
+.goal-meta{display:flex;justify-content:space-between;font-size:11px;color:var(--label3)}
 
-        /* ── Page sections ── */
-        .page { display: none; }
-        .page.active { display: block; }
+/* ── History table ── */
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{padding:9px 14px;text-align:left;font-size:10px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:.6px;border-bottom:1px solid var(--sep)}
+th.r,td.r{text-align:right}
+tbody tr{border-bottom:1px solid var(--sep);transition:background .1s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:var(--surface2)}
+tbody td{padding:11px 14px;vertical-align:middle}
+.row-acts{display:flex;gap:4px;opacity:0;transition:opacity .15s;justify-content:flex-end}
+tbody tr:hover .row-acts{opacity:1}
+.row-btn{padding:3px 9px;font-size:11px;font-weight:500;border-radius:6px;border:1px solid var(--sep);background:var(--surface);color:var(--label2);cursor:pointer;transition:all .1s;font-family:inherit}
+.row-btn:hover{color:var(--label);border-color:var(--label3)}
+.row-btn.del:hover{color:var(--red);border-color:var(--red);background:var(--red-bg)}
 
-        /* ── Insights ── */
-        .insight-box { border-radius: var(--radius); padding: 18px 20px; margin-bottom: 20px; display: flex; gap: 13px; align-items: flex-start; }
-        .insight-box.warn { background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3); }
-        .insight-box.amber { background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.32); }
-        .insight-box.ok { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); }
-        .insight-box.info { background: var(--surface2); border: 1px solid var(--sep); }
-        .insight-icon { font-size: 20px; line-height: 1.2; flex-shrink: 0; }
-        .insight-title { font-weight: 700; font-size: 14px; margin-bottom: 3px; }
-        .insight-msg { font-size: 12.5px; color: var(--label2); line-height: 1.55; }
-        .insight-msg b { color: var(--label); font-weight: 700; }
+/* ── Bills list ── */
+.bill-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--sep)}
+.bill-row:last-child{border-bottom:none}
+.bill-name{flex:1;font-size:13px;font-weight:500}
+.bill-amt{font-size:14px;font-weight:600;color:var(--red)}
+.bill-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
+.bill-row:hover .bill-actions{opacity:1}
 
-        /* ── Goals ── */
-        .goal-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-        .goal-card { background: var(--surface); border-radius: var(--radius); padding: 20px; box-shadow: var(--shadow); }
-        .goal-head { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; gap: 10px; }
-        .goal-name { font-size: 16px; font-weight: 600; letter-spacing: -0.3px; }
-        .goal-deadline { font-size: 11px; color: var(--label3); margin-top: 2px; }
-        .goal-amounts { display: flex; align-items: baseline; gap: 6px; margin-bottom: 10px; }
-        .goal-current { font-size: 22px; font-weight: 300; letter-spacing: -0.5px; }
-        .goal-target { font-size: 13px; color: var(--label3); }
-        .goal-track { width: 100%; height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-bottom: 10px; }
-        .goal-fill { height: 100%; background: linear-gradient(90deg, #4ade80, #86efac); border-radius: 4px; transition: width .3s; }
-        .goal-fill.done { background: linear-gradient(90deg, #16a34a, #22c55e); }
-        .goal-meta { display: flex; align-items: center; justify-content: space-between; font-size: 11px; color: var(--label2); }
-        .goal-pct { font-weight: 700; color: var(--label); font-size: 12px; }
-        .goal-actions { display: flex; gap: 6px; margin-top: 12px; border-top: 1px solid var(--sep); padding-top: 12px; }
-        .goal-actions button { flex: 1; }
-        .goal-pace { font-size: 11px; font-weight: 600; color: var(--label2); background: var(--surface2); border: 1px solid var(--sep); border-radius: 8px; padding: 7px 10px; margin-bottom: 10px; }
-        .goal-pace.behind { color: var(--red); background: var(--red-bg); border-color: transparent; }
-        .goal-pace.ahead  { color: var(--green); background: var(--green-bg); border-color: transparent; }
+/* ── Empty ── */
+.empty{text-align:center;padding:50px 20px}
+.empty-icon{font-size:36px;margin-bottom:10px;opacity:.3}
+.empty h3{font-size:15px;font-weight:600;margin-bottom:5px}
+.empty p{font-size:12.5px;color:var(--label3);margin-bottom:18px}
 
-        /* ── Savings page ── */
-        .savings-inputs { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 18px; }
-        .savings-headline { font-size: 14px; font-weight: 500; margin-bottom: 12px; }
-        .savings-headline.behind { color: var(--red); }
-        .savings-headline.ahead { color: var(--green); }
-        .savings-proj { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
-        .proj-chip { flex: 1; min-width: 120px; background: var(--surface2); border: 1px solid var(--sep); border-radius: var(--radius-sm); padding: 12px 14px; }
-        .proj-chip-label { font-size: 10px; font-weight: 700; color: var(--label3); text-transform: uppercase; letter-spacing: 0.6px; }
-        .proj-chip-val { font-size: 18px; font-weight: 300; letter-spacing: -0.5px; margin-top: 5px; }
-        .proj-chip-sub { font-size: 10.5px; color: var(--label3); margin-top: 2px; }
-        .upcoming-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 11px 0; border-bottom: 1px solid var(--sep); }
-        .upcoming-row:last-child { border-bottom: none; }
-        .recur-name { font-size: 13px; font-weight: 600; }
-        .recur-sub { font-size: 11px; color: var(--label3); margin-top: 2px; }
-        .recur-due { font-size: 11px; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
-        .recur-due.logged { background: var(--green-bg); color: var(--green); }
-        .recur-due.soon   { background: rgba(245,158,11,0.14); color: var(--amber); }
-        .recur-due.pending{ background: var(--surface2); color: var(--label2); }
+/* ── Modal ── */
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);z-index:100;align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:20px;padding:26px;width:100%;max-width:420px;margin:18px;box-shadow:0 24px 80px rgba(0,0,0,.3);max-height:90vh;overflow-y:auto}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px}
+.modal-hdr h2{font-size:17px;font-weight:700;letter-spacing:-.3px}
+.modal-x{width:28px;height:28px;border-radius:50%;background:var(--surface2);border:none;cursor:pointer;font-size:17px;color:var(--label2);line-height:1;display:flex;align-items:center;justify-content:center}
+.fg{margin-bottom:13px}
+.fg label{display:block;font-size:10.5px;font-weight:700;color:var(--label2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.finput,.fselect{width:100%;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;color:var(--label);outline:none;transition:border-color .15s}
+.finput:focus,.fselect:focus{border-color:var(--accent)}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.modal-acts{display:flex;gap:9px;margin-top:18px}
+.btn{padding:11px 16px;border-radius:var(--radius-sm);font-size:13.5px;font-weight:600;font-family:inherit;cursor:pointer;border:none;transition:opacity .15s}
+.btn:hover{opacity:.85}
+.btn-primary{background:var(--accent);color:#fff;flex:1}
+.btn-ghost{background:transparent;color:var(--label2);border:1.5px solid var(--sep)}
+.sec-label{font-size:10px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:1px;margin:16px 0 8px}
 
-        /* ── Trend / spark chart ── */
-        .trend-card { margin-bottom: 20px; }
-        .trend-figure { display: flex; align-items: baseline; gap: 12px; margin-bottom: 4px; flex-wrap: wrap; }
-        .trend-big { font-size: 40px; font-weight: 300; letter-spacing: -1.5px; line-height: 1; }
-        .trend-pill { display: inline-flex; align-items: center; gap: 4px; padding: 4px 11px; border-radius: 20px; font-size: 11px; font-weight: 700; }
-        .trend-pill.up   { color: #1d2230; background: var(--accent); }
-        .trend-pill.down { color: var(--red); background: var(--red-bg); }
-        .trend-caption { font-size: 11px; color: var(--label3); margin-bottom: 14px; }
-        .trend-chart { position: relative; width: 100%; height: 150px; }
-        .trend-svg { width: 100%; height: 100%; display: block; }
-        .trend-line { fill: none; stroke: var(--accent); stroke-width: 2.5; vector-effect: non-scaling-stroke; stroke-linecap: round; stroke-linejoin: round; filter: drop-shadow(0 0 6px rgba(244,114,182,0.6)); }
-        .trend-line.neg { stroke: var(--red); filter: drop-shadow(0 0 6px rgba(239,68,68,0.5)); }
-        .trend-line.green { stroke: #22c55e; filter: drop-shadow(0 0 6px rgba(34,197,94,0.5)); }
-        [data-theme="light"] .trend-line { stroke: #db2777; filter: drop-shadow(0 0 4px rgba(219,39,119,0.35)); }
-        [data-theme="light"] .trend-line.neg { stroke: var(--red); }
-        [data-theme="light"] .trend-dot { border-color: #db2777; box-shadow: 0 0 10px rgba(219,39,119,0.5); }
-        .trend-dot { position: absolute; width: 14px; height: 14px; border-radius: 50%; background: #fff; border: 3px solid var(--accent); box-shadow: 0 0 12px rgba(244,114,182,0.9); transform: translate(-50%, -50%); pointer-events: none; }
-        .trend-dot.neg { border-color: var(--red); box-shadow: 0 0 12px rgba(239,68,68,0.8); }
-        .trend-dot.green { border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.8); }
-        .trend-axis { display: flex; justify-content: space-between; margin-top: 10px; font-size: 10px; color: var(--label3); text-transform: uppercase; letter-spacing: 0.5px; }
-
-        /* ── Modal ── */
-        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); z-index: 100; align-items: center; justify-content: center; }
-        .overlay.open { display: flex; }
-        .modal { background: var(--surface); border-radius: 20px; padding: 28px; width: 100%; max-width: 460px; margin: 20px; box-shadow: 0 24px 80px rgba(0,0,0,0.25); max-height: 90vh; overflow-y: auto; }
-        .modal-hdr { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
-        .modal-hdr h2 { font-size: 18px; font-weight: 700; letter-spacing: -0.3px; }
-        .modal-x { width: 30px; height: 30px; border-radius: 50%; background: var(--surface2); border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; color: var(--label2); line-height: 1; }
-        .fg { margin-bottom: 14px; }
-        .fg label { display: block; font-size: 11px; font-weight: 700; color: var(--label2); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-        .frow { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        .finput, .fselect, .ftextarea { width: 100%; padding: 10px 13px; background: var(--surface2); border: 1.5px solid var(--sep); border-radius: var(--radius-sm); font-size: 14px; font-family: inherit; color: var(--label); outline: none; transition: border-color .15s; }
-        .finput:focus, .fselect:focus, .ftextarea:focus { border-color: var(--accent); }
-        .modal-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .modal-divider { font-size: 10px; font-weight: 700; color: var(--label3); text-transform: uppercase; letter-spacing: 1px; margin: 18px 0 10px; }
-        .btn { padding: 11px 18px; border-radius: var(--radius-sm); font-size: 13.5px; font-weight: 600; font-family: inherit; cursor: pointer; border: none; transition: opacity .15s; }
-        .btn:hover { opacity: 0.85; }
-        .btn-primary { background: var(--accent); color: #111827; flex: 1; }
-        .btn-ghost { background: transparent; color: var(--label2); border: 1.5px solid var(--sep); }
-
-        /* ── Spendable preview in modal ── */
-        /* ── Quick-input cards ── */
-        .quick-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
-        @media (max-width: 600px) { .quick-grid { grid-template-columns: 1fr; } }
-        .quick-card { border-radius: var(--radius); padding: 22px 22px 18px; overflow: hidden; position: relative; box-shadow: var(--shadow); }
-        .quick-card::before { content:""; position:absolute; top:-40%; right:-20%; width:180px; height:180px; border-radius:50%; background:radial-gradient(circle,rgba(255,255,255,0.28),transparent 70%); pointer-events:none; }
-        .quick-card > * { position: relative; z-index: 1; }
-        .quick-card.inv  { background: linear-gradient(145deg, #db2777 0%, #f472b6 100%); }
-        .quick-card.cards { background: linear-gradient(145deg, #fbcfe8 0%, #ffe4e6 100%); }
-        .quick-card .kpi-icon { margin-bottom: 12px; }
-        .quick-card.inv  .kpi-icon  { background: rgba(255,255,255,0.2); color: #fff; }
-        .quick-card.cards .kpi-icon { background: rgba(29,34,48,0.12); color: var(--navy); }
-        .quick-card .kpi-label { margin-bottom: 10px; }
-        .quick-card.inv  .kpi-label { color: rgba(255,255,255,0.65); }
-        .quick-card.cards .kpi-label { color: rgba(29,34,48,0.55); }
-        .quick-input { width: 100%; background: rgba(255,255,255,0.2); border: 1.5px solid rgba(255,255,255,0.3); border-radius: var(--radius-sm); padding: 9px 13px; font-size: 20px; font-weight: 300; letter-spacing: -0.5px; color: #fff; font-family: inherit; outline: none; transition: border-color .15s, background .15s; margin-bottom: 0; }
-        .quick-input:focus { background: rgba(255,255,255,0.28); border-color: rgba(255,255,255,0.55); }
-        .quick-input::placeholder { color: rgba(255,255,255,0.4); }
-        .quick-card.cards .quick-input { background: rgba(29,34,48,0.1); border-color: rgba(29,34,48,0.15); color: var(--navy); }
-        .quick-card.cards .quick-input:focus { background: rgba(29,34,48,0.17); border-color: rgba(29,34,48,0.35); }
-        .quick-card.cards .quick-input::placeholder { color: rgba(29,34,48,0.3); }
-        .quick-card .quick-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-        .quick-card .quick-row:last-child { margin-bottom: 0; }
-        .quick-row-label { font-size: 11px; font-weight: 600; color: rgba(29,34,48,0.5); white-space: nowrap; min-width: 52px; }
-        .quick-card.inv .quick-row-label { color: rgba(255,255,255,0.55); }
-        .quick-card .quick-row .quick-input { font-size: 15px; margin-bottom: 0; }
-        .quick-saved-chip { display: inline-block; font-size: 10px; font-weight: 700; letter-spacing: 0.5px; padding: 2px 8px; border-radius: 20px; background: rgba(255,255,255,0.25); color: #fff; margin-top: 8px; opacity: 0; transition: opacity .3s; }
-        .quick-saved-chip.show { opacity: 1; }
-        .quick-card.cards .quick-saved-chip { background: rgba(29,34,48,0.15); color: var(--navy); }
-        .quick-sub { font-size: 11px; margin-top: 10px; }
-        .quick-card.inv .quick-sub { color: rgba(255,255,255,0.5); }
-        .quick-card.cards .quick-sub { color: rgba(29,34,48,0.45); }
-
-        .form-section { border: 1.5px solid var(--sep); border-radius: var(--radius-sm); padding: 16px 16px 8px; margin-bottom: 14px; background: var(--surface2); }
-        .form-section-title { font-size: 10px; font-weight: 700; color: var(--label3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
-        .form-section .fg:last-child { margin-bottom: 8px; }
-        .spendable-preview { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; background: var(--green-bg); border: 1px solid rgba(34,197,94,0.25); border-radius: var(--radius-sm); margin-top: 8px; }
-        .spendable-preview.neg { background: var(--red-bg); border-color: rgba(239,68,68,0.25); }
-        .sp-label { font-size: 12px; font-weight: 700; color: var(--label2); text-transform: uppercase; letter-spacing: 0.5px; }
-        .sp-value { font-size: 24px; font-weight: 300; letter-spacing: -1px; color: var(--green); }
-        .spendable-preview.neg .sp-value { color: var(--red); }
-
-        /* ── Cycle cards (payday page) ── */
-        .cycle-card { background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow); overflow: hidden; margin-bottom: 16px; }
-        .cycle-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 22px; border-bottom: 1px solid var(--sep); gap: 12px; }
-        .cycle-date-label { font-size: 14px; font-weight: 600; }
-        .cycle-spendable { font-size: 20px; font-weight: 300; letter-spacing: -0.5px; }
-        .cycle-body { padding: 18px 22px; }
-        .formula-line { display: flex; align-items: center; justify-content: space-between; padding: 9px 0; border-bottom: 1px solid var(--sep); font-size: 13px; }
-        .formula-line:last-child { border-bottom: none; }
-        .formula-line.sub { padding: 6px 0 6px 18px; }
-        .formula-line.sub .formula-label { font-size: 12px; color: var(--label3); }
-        .formula-line.total { font-size: 15px; font-weight: 700; padding-top: 14px; border-top: 2px solid var(--sep); border-bottom: none; margin-top: 4px; }
-        .formula-label { color: var(--label2); }
-        .formula-value { font-weight: 600; }
-        .cycle-actions { display: flex; gap: 6px; justify-content: flex-end; padding-top: 12px; border-top: 1px solid var(--sep); margin-top: 4px; }
-
-        /* ── Dashboard savings widget ── */
-        .savings-widget-balance { font-size: 36px; font-weight: 300; letter-spacing: -1.5px; margin-bottom: 6px; }
-        .savings-widget-delta { font-size: 12px; color: var(--label3); margin-bottom: 16px; }
-
-        /* ── Toast ── */
-        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(80px); background: #111827; color: #fff; padding: 12px 22px; border-radius: 12px; font-size: 13px; font-weight: 500; box-shadow: 0 8px 32px rgba(0,0,0,0.3); opacity: 0; transition: transform .25s, opacity .25s; z-index: 200; pointer-events: none; }
-        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
-
-        @media (max-width: 720px) {
-            .main { padding: 16px 20px 60px; }
-            .greeting { font-size: 28px; }
-            .sidebar { transform: translateX(-100%); transition: transform .25s; }
-            .sidebar.open { transform: translateX(0); }
-            .main { margin-left: 0; }
-            .menu-btn { display: flex !important; }
-        }
-        .menu-btn { display: none; }
-    </style>
+/* ── Misc ── */
+.pos{color:var(--green)}.neg{color:var(--red)}
+.chip{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10.5px;font-weight:700}
+.chip.green{background:var(--green-bg);color:var(--green)}
+.chip.red{background:var(--red-bg);color:var(--red)}
+.chip.grey{background:var(--surface2);color:var(--label3)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%) translateY(60px);background:#111;color:#fff;padding:11px 20px;border-radius:11px;font-size:12.5px;font-weight:500;box-shadow:0 6px 24px rgba(0,0,0,.35);opacity:0;transition:transform .22s,opacity .22s;z-index:200;pointer-events:none}
+.toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+.menu-btn{display:none;width:34px;height:34px;border-radius:50%;background:var(--surface);border:1px solid var(--sep);cursor:pointer;align-items:center;justify-content:center}
+.menu-btn svg{width:14px;height:14px;stroke:var(--label2);stroke-width:2;fill:none;stroke-linecap:round}
+@media(max-width:680px){.menu-btn{display:flex}}
+</style>
 </head>
-<body>
-    <aside class="sidebar" id="sidebar">
-        <div class="sidebar-brand">
-            <div class="brand-icon">$</div>
-            <div class="brand-name">Finance</div>
-        </div>
-        <nav class="sidebar-nav">
-            <div class="nav-section">Overview</div>
-            <button class="nav-item active" data-page="dashboard">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-                Dashboard
-            </button>
-            <button class="nav-item" data-page="payday">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/><path d="M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01"/></svg>
-                Payday log
-            </button>
-            <button class="nav-item" data-page="savings">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 1v22"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-                Savings
-            </button>
-            <div class="nav-section">Wealth</div>
-            <button class="nav-item" data-page="accounts">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M2 10h20"/></svg>
-                Accounts
-            </button>
-            <button class="nav-item" data-page="goals">
-                <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>
-                Goals
-            </button>
-        </nav>
-        <div class="sidebar-footer">
-            <button class="sidebar-add" id="addBtn">+ Log payday</button>
-            <div class="sidebar-utils">
-                <button class="util-btn" id="themeBtn">Theme</button>
-                <button class="util-btn" id="settingsBtn">Settings</button>
-                <button class="util-btn" id="exportBtn">Export</button>
-                <button class="util-btn" id="importBtn">Import</button>
-            </div>
-        </div>
-    </aside>
+<body data-theme="dark">
+<div class="shell">
 
-    <main class="main">
-        <div class="page-header">
-            <div>
-                <div class="greeting" id="greeting">Hello.</div>
-                <div class="greeting-sub" id="greetingSub"></div>
-            </div>
-            <div class="header-right">
-                <button class="icon-btn menu-btn" id="menuBtn" title="Menu">
-                    <svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg>
-                </button>
-            </div>
-        </div>
+<!-- ── Sidebar ── -->
+<aside class="side" id="side">
+  <div class="brand">
+    <div class="brand-mark">$</div>
+    <span class="brand-name">Finance</span>
+  </div>
+  <nav class="nav">
+    <button class="nav-btn active" data-page="dashboard">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      Dashboard
+    </button>
+    <button class="nav-btn" data-page="history">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
+      History
+    </button>
+    <button class="nav-btn" data-page="bills">
+      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
+      Bills
+    </button>
+  </nav>
+  <div class="side-foot">
+    <button class="side-action" id="logBtn">+ Log savings</button>
+    <div class="side-util">
+      <button class="util-btn" id="themeBtn">Theme</button>
+      <button class="util-btn" id="settingsBtn">Settings</button>
+    </div>
+  </div>
+</aside>
 
-        <!-- ── Dashboard ── -->
-        <section class="page active" id="page-dashboard">
-            <div class="kpi-grid">
-                <div class="kpi-card total">
-                    <div class="kpi-icon total">◈</div>
-                    <div class="kpi-label">Net Worth</div>
-                    <div class="kpi-value" id="kpiNetWorth">$0</div>
-                    <div class="kpi-sub">Assets − Liabilities</div>
-                </div>
-                <div class="kpi-card lime">
-                    <div class="kpi-icon green">↑</div>
-                    <div class="kpi-label">Take-home</div>
-                    <div class="kpi-value" id="kpiSalary">—</div>
-                    <div class="kpi-sub" id="kpiSalarySub">Latest cycle</div>
-                </div>
-                <div class="kpi-card" style="background:var(--surface2);border:1.5px solid var(--sep)">
-                    <div class="kpi-icon amber">◎</div>
-                    <div class="kpi-label">Spendable</div>
-                    <div class="kpi-value" id="kpiSpendable">—</div>
-                    <div class="kpi-sub" id="kpiSpendableSub">Latest cycle</div>
-                </div>
-            </div>
+<!-- ── Main ── -->
+<main class="main">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:28px">
+    <div>
+      <h1 id="ph" style="font-size:32px;font-weight:300;letter-spacing:-1px"></h1>
+      <div id="ph-sub" style="font-size:13px;color:var(--label3);margin-top:6px"></div>
+    </div>
+    <button class="menu-btn" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M3 12h18M3 6h18M3 18h18"/></svg></button>
+  </div>
 
-            <div class="quick-grid">
-                <div class="quick-card inv">
-                    <div class="kpi-icon">↓</div>
-                    <div class="kpi-label">Investment</div>
-                    <div class="quick-row">
-                        <input class="quick-input" type="number" id="dashInvestment" placeholder="0" step="0.01" min="0" onchange="saveDashInvestment(this.value)">
-                    </div>
-                    <div class="quick-saved-chip" id="dashInvestmentChip">Saved ✓</div>
-                    <div class="quick-sub" id="dashInvestmentSub">Latest cycle</div>
-                </div>
-                <div class="quick-card cards">
-                    <div class="kpi-icon">💳</div>
-                    <div class="kpi-label">Card bills</div>
-                    <div class="quick-row">
-                        <span class="quick-row-label" id="dashCardLabel0">Card 1</span>
-                        <input class="quick-input" type="number" id="dashCard0" placeholder="0" step="0.01" min="0" onchange="saveDashCards()">
-                    </div>
-                    <div class="quick-row">
-                        <span class="quick-row-label" id="dashCardLabel1">Card 2</span>
-                        <input class="quick-input" type="number" id="dashCard1" placeholder="0" step="0.01" min="0" onchange="saveDashCards()">
-                    </div>
-                    <div class="quick-row">
-                        <span class="quick-row-label" id="dashCardLabel2">Card 3</span>
-                        <input class="quick-input" type="number" id="dashCard2" placeholder="0" step="0.01" min="0" onchange="saveDashCards()">
-                    </div>
-                    <div class="quick-saved-chip" id="dashCardsChip">Saved ✓</div>
-                    <div class="quick-sub" id="dashCardsSub">Latest cycle</div>
-                </div>
-            </div>
-
-            <div class="content-grid" style="margin-bottom:20px">
-                <div class="card">
-                    <div class="card-header">
-                        <h2>This cycle</h2>
-                        <div class="card-header-right">
-                            <span class="count-badge" id="dashCycleDate">—</span>
-                        </div>
-                    </div>
-                    <div class="card-body" id="dashCycleBody"></div>
-                </div>
-                <div class="card">
-                    <div class="card-header">
-                        <h2>Savings</h2>
-                        <div class="card-header-right">
-                            <button class="row-btn" onclick="switchPage('savings')">Update →</button>
-                        </div>
-                    </div>
-                    <div class="card-body" id="dashSavingsBody"></div>
-                </div>
-            </div>
-
-            <div class="card trend-card">
-                <div class="card-header">
-                    <h2>Spendable trend</h2>
-                    <div class="card-header-right">
-                        <span class="count-badge">Last 6 cycles</span>
-                    </div>
-                </div>
-                <div class="card-body" id="dashTrendBody"></div>
-            </div>
-        </section>
-
-        <!-- ── Payday log ── -->
-        <section class="page" id="page-payday">
-            <div id="paydayInsight"></div>
-            <div style="display:flex;justify-content:flex-end;margin-bottom:20px">
-                <button class="btn btn-primary" onclick="openPaydayModal()" style="flex:0">+ Log payday</button>
-            </div>
-            <div id="cycleList"></div>
-        </section>
-
-        <!-- ── Savings ── -->
-        <section class="page" id="page-savings">
-            <div class="kpi-grid">
-                <div class="kpi-card total">
-                    <div class="kpi-icon total">◈</div>
-                    <div class="kpi-label">Current savings</div>
-                    <div class="kpi-value" id="savCurrent">$0</div>
-                    <div class="kpi-sub" id="savCurrentSub">Latest balance</div>
-                </div>
-                <div class="kpi-card lime">
-                    <div class="kpi-icon green">◎</div>
-                    <div class="kpi-label">Saved this month</div>
-                    <div class="kpi-value" id="savThisMonth">—</div>
-                    <div class="kpi-sub" id="savThisMonthSub">vs target</div>
-                </div>
-                <div class="kpi-card peach">
-                    <div class="kpi-icon amber">↗</div>
-                    <div class="kpi-label">Projected in 1 year</div>
-                    <div class="kpi-value" id="savProjected">$0</div>
-                    <div class="kpi-sub" id="savProjectedSub">at target rate</div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <h2>Savings tracker</h2>
-                    <div class="card-header-right">
-                        <span class="count-badge" id="savingsStatusBadge">—</span>
-                    </div>
-                </div>
-                <div class="card-body">
-                    <p style="font-size:12px;color:var(--label3);margin-bottom:14px">Once a month, update your total savings balance. The tracker compares it to last month and tells you how much you saved. Set a monthly target to track progress.</p>
-                    <div class="savings-inputs">
-                        <div class="fg" style="margin-bottom:0">
-                            <label>Current savings balance</label>
-                            <input type="number" class="finput" id="savingsBalanceInput" step="100" min="0" onchange="setSavingsBalance(this.value)">
-                        </div>
-                        <div class="fg" style="margin-bottom:0">
-                            <label>Monthly target</label>
-                            <input type="number" class="finput" id="savingsTargetInput" step="100" min="0" onchange="setSavingsTarget(this.value)">
-                        </div>
-                    </div>
-                    <div id="savingsStatus"></div>
-                </div>
-            </div>
-        </section>
-
-        <!-- ── Accounts ── -->
-        <section class="page" id="page-accounts">
-            <div class="kpi-grid">
-                <div class="kpi-card total">
-                    <div class="kpi-icon total">◈</div>
-                    <div class="kpi-label">Net Worth</div>
-                    <div class="kpi-value" id="acctNetWorth">$0</div>
-                </div>
-                <div class="kpi-card lime">
-                    <div class="kpi-icon blue">↗</div>
-                    <div class="kpi-label">Total Assets</div>
-                    <div class="kpi-value pos" id="acctAssets">$0</div>
-                </div>
-                <div class="kpi-card peach">
-                    <div class="kpi-icon amber">↘</div>
-                    <div class="kpi-label">Total Liabilities</div>
-                    <div class="kpi-value neg" id="acctLiabilities">$0</div>
-                </div>
-            </div>
-            <div class="card">
-                <div class="card-header">
-                    <h2>Accounts</h2>
-                    <div class="card-header-right">
-                        <span class="count-badge" id="acctCount">0</span>
-                        <button class="row-btn" onclick="openAcctModal()">+ Add account</button>
-                    </div>
-                </div>
-                <div id="acctList"></div>
-            </div>
-        </section>
-
-        <!-- ── Goals ── -->
-        <section class="page" id="page-goals">
-            <div class="page-header" style="margin-bottom:16px">
-                <div>
-                    <div class="greeting" style="font-size:22px">Savings goals</div>
-                    <div class="greeting-sub" id="goalsSub">Track progress toward what matters.</div>
-                </div>
-                <button class="btn btn-primary" onclick="openGoalModal()" style="flex:0">+ New goal</button>
-            </div>
-            <div id="goalsList"></div>
-        </section>
-    </main>
-
-    <!-- ── Payday Modal ── -->
-    <div class="overlay" id="paydayModal">
-        <div class="modal">
-            <div class="modal-hdr">
-                <h2 id="paydayModalTitle">Log payday</h2>
-                <button class="modal-x" onclick="closeModal('paydayModal')">×</button>
-            </div>
-            <div class="fg">
-                <label>Pay date</label>
-                <input type="date" class="finput" id="payDate">
-            </div>
-            <div class="modal-divider">Income</div>
-            <div class="fg">
-                <label>Take-home salary</label>
-                <input type="number" class="finput" id="paySalary" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-            </div>
-            <div class="form-section">
-                <div class="form-section-title">Investment</div>
-                <div class="fg">
-                    <label>Automated investment</label>
-                    <input type="number" class="finput" id="payInvestment" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-                </div>
-            </div>
-            <div class="form-section">
-                <div class="form-section-title">Credit card bills</div>
-                <div class="fg">
-                    <label id="payCardLabel0">Card 1</label>
-                    <input type="number" class="finput" id="payCard0" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-                </div>
-                <div class="fg">
-                    <label id="payCardLabel1">Card 2</label>
-                    <input type="number" class="finput" id="payCard1" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-                </div>
-                <div class="fg">
-                    <label id="payCardLabel2">Card 3</label>
-                    <input type="number" class="finput" id="payCard2" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-                </div>
-            </div>
-            <div class="fg">
-                <label>Note (optional)</label>
-                <input type="text" class="finput" id="payNote" placeholder="e.g. January cycle">
-            </div>
-            <div class="spendable-preview" id="spendablePreview">
-                <span class="sp-label">= Spendable</span>
-                <span class="sp-value" id="spendablePreviewValue">$0</span>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal('paydayModal')">Cancel</button>
-                <button class="btn btn-primary" id="paydaySaveBtn" onclick="savePayday()">Save</button>
-            </div>
-        </div>
+  <!-- Dashboard -->
+  <section class="page active" id="page-dashboard">
+    <div class="kpi-row">
+      <div class="kpi accent">
+        <div class="kpi-lbl">Current savings</div>
+        <div class="kpi-val" id="kSavings">—</div>
+        <div id="kSavingsDelta"></div>
+        <div class="kpi-sub" id="kSavingsSub">Log your balance to start tracking</div>
+      </div>
+      <div class="kpi green-card">
+        <div class="kpi-lbl">Saved this month</div>
+        <div class="kpi-val" id="kSaved">—</div>
+        <div class="kpi-sub" id="kSavedSub">vs your goal</div>
+      </div>
+      <div class="kpi plain">
+        <div class="kpi-lbl">Spendable</div>
+        <div class="kpi-val" id="kSpendable" style="font-size:28px">—</div>
+        <div class="kpi-sub" id="kSpendableSub">After bills &amp; savings goal</div>
+      </div>
     </div>
 
-    <!-- ── Account Modal ── -->
-    <div class="overlay" id="acctModal">
-        <div class="modal">
-            <div class="modal-hdr">
-                <h2 id="acctModalTitle">Add account</h2>
-                <button class="modal-x" onclick="closeModal('acctModal')">×</button>
-            </div>
-            <div class="fg">
-                <label>Account name</label>
-                <input type="text" class="finput" id="acctName" placeholder="e.g. DBS Multiplier, CPF OA">
-            </div>
-            <div class="frow">
-                <div class="fg">
-                    <label>Type</label>
-                    <select class="fselect" id="acctTypeSel">
-                        <option value="checking">Checking</option>
-                        <option value="savings">Savings</option>
-                        <option value="investment">Investment</option>
-                        <option value="retirement">Retirement / CPF</option>
-                        <option value="property">Property</option>
-                        <option value="cash">Cash</option>
-                        <option value="credit">Credit card</option>
-                        <option value="loan">Loan</option>
-                        <option value="mortgage">Mortgage</option>
-                    </select>
-                </div>
-                <div class="fg">
-                    <label>Balance</label>
-                    <input type="number" class="finput" id="acctBalance" placeholder="0.00" step="0.01">
-                </div>
-            </div>
-            <div class="fg">
-                <label>Note (optional)</label>
-                <input type="text" class="finput" id="acctNote" placeholder="e.g. Joint account">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal('acctModal')">Cancel</button>
-                <button class="btn btn-primary" id="acctSaveBtn" onclick="saveAcct()">Add account</button>
-            </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-hdr">
+          <h2>Spendable breakdown</h2>
+          <div class="card-hdr-right"><button class="row-btn" onclick="openSettings()">Edit →</button></div>
         </div>
-    </div>
-
-    <!-- ── Goal Modal ── -->
-    <div class="overlay" id="goalModal">
-        <div class="modal">
-            <div class="modal-hdr">
-                <h2 id="goalModalTitle">New goal</h2>
-                <button class="modal-x" onclick="closeModal('goalModal')">×</button>
-            </div>
-            <div class="fg">
-                <label>Goal name</label>
-                <input type="text" class="finput" id="goalName" placeholder="e.g. Emergency fund, Japan trip">
-            </div>
-            <div class="frow">
-                <div class="fg">
-                    <label>Target amount</label>
-                    <input type="number" class="finput" id="goalTarget" placeholder="0.00" step="0.01" min="0">
-                </div>
-                <div class="fg">
-                    <label>Current saved</label>
-                    <input type="number" class="finput" id="goalCurrent" placeholder="0.00" step="0.01" min="0">
-                </div>
-            </div>
-            <div class="fg">
-                <label>Target date (optional)</label>
-                <input type="date" class="finput" id="goalDeadline">
-            </div>
-            <div class="fg">
-                <label>Note (optional)</label>
-                <input type="text" class="finput" id="goalNote" placeholder="Why this goal?">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal('goalModal')">Cancel</button>
-                <button class="btn btn-primary" id="goalSaveBtn" onclick="saveGoal()">Save goal</button>
-            </div>
+        <div class="card-body" id="formulaBody"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr">
+          <h2>Savings goal</h2>
+          <div class="card-hdr-right" id="goalBadge"></div>
         </div>
+        <div class="card-body" id="goalBody"></div>
+      </div>
     </div>
+  </section>
 
-    <!-- ── Update Goal Modal ── -->
-    <div class="overlay" id="goalUpdateModal">
-        <div class="modal">
-            <div class="modal-hdr">
-                <h2>Update progress</h2>
-                <button class="modal-x" onclick="closeModal('goalUpdateModal')">×</button>
-            </div>
-            <div class="fg">
-                <label>Add to current saved</label>
-                <input type="number" class="finput" id="goalAddAmount" placeholder="0.00" step="0.01">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal('goalUpdateModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="applyGoalUpdate()">Add</button>
-            </div>
+  <!-- History -->
+  <section class="page" id="page-history">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:18px">
+      <button class="btn btn-primary" onclick="openLog()" style="flex:0">+ Log savings</button>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><h2>Monthly savings log</h2><span id="histCount" style="font-size:12px;color:var(--label3)"></span></div>
+      <div id="histBody"></div>
+    </div>
+  </section>
+
+  <!-- Bills -->
+  <section class="page" id="page-bills">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:18px">
+      <button class="btn btn-primary" onclick="openBillModal()" style="flex:0">+ Add bill</button>
+    </div>
+    <div class="grid2">
+      <div class="card">
+        <div class="card-hdr">
+          <h2>Monthly bills</h2>
+          <div class="card-hdr-right"><span id="billTotal" style="font-size:13px;font-weight:700;color:var(--red)"></span></div>
         </div>
+        <div class="card-body" id="billList"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h2>Bill summary</h2></div>
+        <div class="card-body" id="billSummary"></div>
+      </div>
     </div>
+  </section>
+</main>
+</div>
 
-    <!-- ── Settings Modal ── -->
-    <div class="overlay" id="settingsModal">
-        <div class="modal">
-            <div class="modal-hdr">
-                <h2>Settings</h2>
-                <button class="modal-x" onclick="closeModal('settingsModal')">×</button>
-            </div>
-            <div class="frow">
-                <div class="fg">
-                    <label>Currency</label>
-                    <select class="fselect" id="setCurrency">
-                        <option value="SGD">SGD</option>
-                        <option value="USD">USD</option>
-                        <option value="AUD">AUD</option>
-                        <option value="GBP">GBP</option>
-                        <option value="EUR">EUR</option>
-                        <option value="MYR">MYR</option>
-                        <option value="HKD">HKD</option>
-                        <option value="JPY">JPY</option>
-                        <option value="CAD">CAD</option>
-                    </select>
-                </div>
-                <div class="fg">
-                    <label>Pay day of month</label>
-                    <input type="number" class="finput" id="setPayDay" min="1" max="28" placeholder="14">
-                </div>
-            </div>
-            <div class="modal-divider">Card names</div>
-            <div class="fg">
-                <label>Card 1 name</label>
-                <input type="text" class="finput" id="setCard0" placeholder="e.g. DBS Visa">
-            </div>
-            <div class="fg">
-                <label>Card 2 name</label>
-                <input type="text" class="finput" id="setCard1" placeholder="e.g. OCBC Platinum">
-            </div>
-            <div class="fg">
-                <label>Card 3 name</label>
-                <input type="text" class="finput" id="setCard2" placeholder="e.g. Citi Cashback">
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancel</button>
-                <button class="btn btn-primary" onclick="saveSettings()">Save</button>
-            </div>
-        </div>
+<!-- ── Log savings modal ── -->
+<div class="overlay" id="logModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2 id="logTitle">Log savings</h2>
+      <button class="modal-x" onclick="closeModal('logModal')">×</button>
     </div>
+    <div class="fg">
+      <label>Month</label>
+      <input type="month" class="finput" id="logMonth">
+    </div>
+    <div class="fg">
+      <label>Current bank savings balance</label>
+      <input type="number" class="finput" id="logBalance" placeholder="0.00" step="0.01" min="0">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('logModal')">Cancel</button>
+      <button class="btn btn-primary" id="logSaveBtn" onclick="saveLog()">Save</button>
+    </div>
+  </div>
+</div>
 
-    <input type="file" id="importFile" accept=".json" style="display:none">
-    <div class="toast" id="toast"></div>
+<!-- ── Bill modal ── -->
+<div class="overlay" id="billModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2 id="billModalTitle">Add bill</h2>
+      <button class="modal-x" onclick="closeModal('billModal')">×</button>
+    </div>
+    <div class="fg">
+      <label>Bill name</label>
+      <input type="text" class="finput" id="billName" placeholder="e.g. Rent, Netflix, Phone">
+    </div>
+    <div class="fg">
+      <label>Monthly amount</label>
+      <input type="number" class="finput" id="billAmt" placeholder="0.00" step="0.01" min="0">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('billModal')">Cancel</button>
+      <button class="btn btn-primary" id="billSaveBtn" onclick="saveBill()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Settings modal ── -->
+<div class="overlay" id="settingsModal">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h2>Settings</h2>
+      <button class="modal-x" onclick="closeModal('settingsModal')">×</button>
+    </div>
+    <div class="frow">
+      <div class="fg">
+        <label>Currency</label>
+        <select class="fselect" id="setCurrency">
+          <option value="SGD">SGD</option><option value="USD">USD</option>
+          <option value="AUD">AUD</option><option value="GBP">GBP</option>
+          <option value="EUR">EUR</option><option value="MYR">MYR</option>
+          <option value="HKD">HKD</option><option value="JPY">JPY</option>
+        </select>
+      </div>
+      <div class="fg">
+        <label>Monthly take-home salary</label>
+        <input type="number" class="finput" id="setSalary" placeholder="0.00" step="0.01" min="0">
+      </div>
+    </div>
+    <div class="fg">
+      <label>Monthly savings goal</label>
+      <input type="number" class="finput" id="setGoal" placeholder="e.g. 500" step="0.01" min="0">
+    </div>
+    <div class="modal-acts">
+      <button class="btn btn-ghost" onclick="closeModal('settingsModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSettings()">Save</button>
+    </div>
+  </div>
+</div>
+
+<input type="file" id="importFile" accept=".json" style="display:none">
+<div class="toast" id="toast"></div>
 
 <script>
-// ─── State ───
-const STORAGE_KEY = 'finance_tracker_v1';
-const DEFAULT_DATA = {
-    cycles: [],
-    accounts: [],
-    goals: [],
-    savings: [],
-    settings: { currency: 'SGD', theme: 'dark', payDay: 14, savingsTarget: 0, cardNames: ['Card 1', 'Card 2', 'Card 3'] }
+// ── State ──
+const KEY = 'finance_v2';
+const DEF = {
+  settings: { currency: 'SGD', theme: 'dark', salary: 0, savingsGoal: 0 },
+  savings: [],   // [{month:'YYYY-MM', balance:0}]
+  bills: []      // [{id, name, amount}]
 };
-const ASSET_TYPES = new Set(['cash','checking','savings','investment','retirement','property']);
 
-let data = loadData();
-let acctEditId = null;
-let goalEditId = null;
-let goalUpdateId = null;
-let cycleEditId = null;
+let data = load();
+let billEditId = null;
+let logEditMonth = null;
 
-function loadData() {
-    try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (!raw) return structuredClone(DEFAULT_DATA);
-        const parsed = JSON.parse(raw);
-        const base = structuredClone(DEFAULT_DATA);
-        return {
-            ...base,
-            cycles: parsed.cycles || [],
-            accounts: parsed.accounts || [],
-            goals: parsed.goals || [],
-            savings: parsed.savings || [],
-            settings: { ...base.settings, ...(parsed.settings || {}) }
-        };
-    } catch { return structuredClone(DEFAULT_DATA); }
+function load() {
+  try {
+    const r = localStorage.getItem(KEY);
+    if (!r) return clone(DEF);
+    const p = JSON.parse(r);
+    return { ...clone(DEF), ...p, settings: { ...DEF.settings, ...(p.settings||{}) } };
+  } catch { return clone(DEF); }
 }
-function saveData() { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+function save() { localStorage.setItem(KEY, JSON.stringify(data)); }
+function clone(x) { return JSON.parse(JSON.stringify(x)); }
+function uid() { return Math.random().toString(36).slice(2,10); }
 
-// ─── Utilities ───
-function uid() { return Math.random().toString(36).slice(2, 11); }
-function fmt(n) {
-    const cur = data.settings.currency || 'SGD';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+// ── Format ──
+function fmt(n, decimals=0) {
+  return new Intl.NumberFormat('en-US',{style:'currency',currency:data.settings.currency||'SGD',minimumFractionDigits:decimals,maximumFractionDigits:decimals}).format(n);
 }
-function fmtExact(n) {
-    const cur = data.settings.currency || 'SGD';
-    return new Intl.NumberFormat('en-US', { style: 'currency', currency: cur, minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+function fmtMonth(key) {
+  const [y,m] = key.split('-').map(Number);
+  return new Date(y, m-1, 1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
 }
-function fmtDate(d) { return new Date(d + 'T12:00:00').toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }); }
-function fmtMonth(key) { const [y, m] = key.split('-').map(Number); return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); }
-function todayISO() { return new Date().toISOString().slice(0, 10); }
-function currentMonthKey() { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`; }
-function toast(msg) { const t = document.getElementById('toast'); t.textContent = msg; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); }
-function escapeHTML(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function emptyHTML(icon, title, msg, action = '') { return `<div class="empty"><div class="empty-icon">${icon}</div><h3>${title}</h3><p>${msg}</p>${action}</div>`; }
+function thisMonth() { return new Date().toISOString().slice(0,7); }
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+function esc(s) { return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 
-// ─── Cycle calculations ───
-function currentCycleStart() {
-    const now = new Date();
-    const payDay = Math.min(Number(data.settings.payDay) || 14, 28);
-    if (now.getDate() >= payDay) {
-        return `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(payDay).padStart(2,'0')}`;
-    }
-    const prev = new Date(now.getFullYear(), now.getMonth() - 1, payDay);
-    return `${prev.getFullYear()}-${String(prev.getMonth()+1).padStart(2,'0')}-${String(payDay).padStart(2,'0')}`;
+// ── Derived ──
+function sortedSavings() { return [...data.savings].sort((a,b)=>a.month.localeCompare(b.month)); }
+function latestSavings() { const s=sortedSavings(); return s.length ? s[s.length-1] : null; }
+function prevSavings() { const s=sortedSavings(); return s.length>=2 ? s[s.length-2] : null; }
+function totalBills() { return data.bills.reduce((s,b)=>s+Number(b.amount||0), 0); }
+function spendable() {
+  const s = data.settings;
+  return Number(s.salary||0) - totalBills() - Number(s.savingsGoal||0);
 }
-function cycleSpendable(c) {
-    const cards = (c.cards || []).reduce((s, cd) => s + Number(cd.amount || 0), 0);
-    return Number(c.salary || 0) - Number(c.investment || 0) - cards;
-}
-function cycleTotalCards(c) { return (c.cards || []).reduce((s, cd) => s + Number(cd.amount || 0), 0); }
-function cycleTotalOut(c) { return Number(c.investment || 0) + cycleTotalCards(c); }
-function sortedCycles() { return [...data.cycles].sort((a, b) => b.date.localeCompare(a.date)); }
-function latestCycle() { return sortedCycles()[0] || null; }
-function isCurrentCycleLogged() {
-    const start = currentCycleStart();
-    return data.cycles.some(c => c.date >= start);
+function savedThisMonth() {
+  const cur = latestSavings(), prev = prevSavings();
+  if (!cur) return null;
+  if (!prev) return null;
+  return cur.balance - prev.balance;
 }
 
-// ─── Accounts ───
-function sumAssets() { return data.accounts.filter(a => ASSET_TYPES.has(a.type)).reduce((s, a) => s + Number(a.balance || 0), 0); }
-function sumLiabilities() { return data.accounts.filter(a => !ASSET_TYPES.has(a.type)).reduce((s, a) => s + Number(a.balance || 0), 0); }
-function netWorth() { return sumAssets() - sumLiabilities(); }
-
-// ─── Savings ───
-function savingsSeries() { return [...data.savings].sort((a, b) => a.month.localeCompare(b.month)); }
-
-// ─── Render: Dashboard ───
+// ── Render: Dashboard ──
 function renderDashboard() {
-    document.getElementById('kpiNetWorth').textContent = fmt(netWorth());
+  const hour = new Date().getHours();
+  const greet = hour<5?'Good night.':hour<12?'Good morning.':hour<18?'Good afternoon.':'Good evening.';
+  document.getElementById('ph').textContent = greet;
+  document.getElementById('ph-sub').textContent = 'Your financial snapshot.';
 
-    const cycle = latestCycle();
-    const cardNames = data.settings.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-    [0,1,2].forEach(i => document.getElementById(`dashCardLabel${i}`).textContent = cardNames[i] || `Card ${i+1}`);
+  const cur = latestSavings();
+  const prev = prevSavings();
+  const delta = savedThisMonth();
+  const goal = Number(data.settings.savingsGoal||0);
+  const sp = spendable();
 
-    if (cycle) {
-        const spendable = cycleSpendable(cycle);
-        document.getElementById('kpiSalary').textContent = fmt(Number(cycle.salary || 0));
-        document.getElementById('kpiSalarySub').textContent = fmtDate(cycle.date);
-        document.getElementById('kpiSpendable').textContent = fmt(spendable);
-        document.getElementById('kpiSpendableSub').textContent = spendable >= 0 ? 'After all deductions' : 'Over — cut spending';
-        // Quick-input cards
-        document.getElementById('dashInvestment').value = Number(cycle.investment) || '';
-        document.getElementById('dashInvestmentSub').textContent = fmtDate(cycle.date);
-        const cards = cycle.cards || [];
-        [0,1,2].forEach(i => {
-            document.getElementById(`dashCard${i}`).value = cards[i] ? (Number(cards[i].amount) || '') : '';
-        });
-        document.getElementById('dashCardsSub').textContent = fmtDate(cycle.date);
-        document.getElementById('dashCycleDate').textContent = fmtDate(cycle.date);
-        document.getElementById('dashCycleBody').innerHTML = cycleFormulaHTML(cycle);
+  // Current savings KPI
+  document.getElementById('kSavings').textContent = cur ? fmt(cur.balance) : '—';
+  document.getElementById('kSavingsSub').textContent = cur ? `as of ${fmtMonth(cur.month)}` : 'Log your balance to start tracking';
+  if (delta !== null) {
+    const sign = delta >= 0 ? '+' : '';
+    const cls = delta >= 0 ? 'pos' : 'neg';
+    document.getElementById('kSavingsDelta').innerHTML = `<div class="delta ${delta>=0?'pos':'neg'}">${sign}${fmt(delta)} this month</div>`;
+  } else {
+    document.getElementById('kSavingsDelta').innerHTML = '';
+  }
+
+  // Saved this month KPI
+  if (delta !== null) {
+    document.getElementById('kSaved').textContent = fmt(delta);
+    document.getElementById('kSaved').className = 'kpi-val ' + (delta >= 0 ? '' : 'neg');
+    if (goal > 0) {
+      const pct = Math.round((delta / goal) * 100);
+      document.getElementById('kSavedSub').textContent = `${pct}% of ${fmt(goal)} goal`;
     } else {
-        ['kpiSalary','kpiSpendable'].forEach(id => document.getElementById(id).textContent = '—');
-        ['dashInvestment','dashCard0','dashCard1','dashCard2'].forEach(id => { document.getElementById(id).value = ''; });
-        document.getElementById('dashInvestmentSub').textContent = 'No cycle logged yet';
-        document.getElementById('dashCardsSub').textContent = 'No cycle logged yet';
-        document.getElementById('dashCycleDate').textContent = 'Not logged yet';
-        document.getElementById('dashCycleBody').innerHTML = emptyHTML('📅', 'No cycle logged', 'Log your first payday to see the breakdown.', `<button class="btn btn-primary" onclick="openPaydayModal()" style="flex:0;display:inline-block;margin-top:8px">+ Log payday</button>`);
+      document.getElementById('kSavedSub').textContent = 'Set a goal in Settings';
     }
+  } else if (cur) {
+    document.getElementById('kSaved').textContent = '—';
+    document.getElementById('kSavedSub').textContent = 'Log next month to compare';
+  } else {
+    document.getElementById('kSaved').textContent = '—';
+    document.getElementById('kSavedSub').textContent = 'vs your goal';
+  }
 
-    // Savings widget
-    const series = savingsSeries();
-    const currentBal = series.length ? series[series.length - 1].balance : 0;
-    const savedThisMonth = series.length >= 2 ? series[series.length-1].balance - series[series.length-2].balance : null;
-    const target = Number(data.settings.savingsTarget) || 0;
-    const savEl = document.getElementById('dashSavingsBody');
-    if (currentBal === 0 && series.length === 0) {
-        savEl.innerHTML = emptyHTML('💰', 'Not tracked yet', 'Go to Savings and enter your current balance.', '');
-    } else {
-        let deltaHTML = '';
-        if (savedThisMonth !== null) {
-            const cls = savedThisMonth >= 0 ? 'pos' : 'neg';
-            const sign = savedThisMonth >= 0 ? '+' : '';
-            deltaHTML = `<div class="savings-widget-delta"><span class="${cls}">${sign}${fmt(savedThisMonth)}</span> this month${target > 0 ? ` · target ${fmt(target)}` : ''}</div>`;
-        } else {
-            deltaHTML = `<div class="savings-widget-delta" style="color:var(--label3)">Update monthly to track progress</div>`;
-        }
-        savEl.innerHTML = `<div class="savings-widget-balance">${fmt(currentBal)}</div>${deltaHTML}`;
-    }
+  // Spendable KPI
+  if (Number(data.settings.salary||0) > 0) {
+    document.getElementById('kSpendable').textContent = fmt(sp);
+    document.getElementById('kSpendable').style.color = sp >= 0 ? '' : 'var(--red)';
+    document.getElementById('kSpendableSub').textContent = sp >= 0 ? 'After bills & savings goal' : 'Bills + goal exceed salary';
+  } else {
+    document.getElementById('kSpendable').textContent = '—';
+    document.getElementById('kSpendable').style.color = '';
+    document.getElementById('kSpendableSub').textContent = 'Set salary in Settings';
+  }
 
-    // Trend chart
-    renderDashTrend();
+  // Formula breakdown
+  renderFormula();
 
-    const hour = new Date().getHours();
-    const greet = hour < 5 ? 'Good night.' : hour < 12 ? 'Good morning.' : hour < 18 ? 'Good afternoon.' : 'Good evening.';
-    document.getElementById('greeting').textContent = greet;
-    document.getElementById('greetingSub').textContent = `${data.cycles.length} cycles · ${data.accounts.length} accounts · ${data.goals.length} goals`;
+  // Goal card
+  renderGoalCard();
 }
 
-function cycleFormulaHTML(c) {
-    const cardNames = data.settings.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-    const spendable = cycleSpendable(c);
-    const cards = c.cards || [];
-    let rows = `<div class="formula-line"><span class="formula-label">Take-home salary</span><span class="formula-value pos">${fmt(Number(c.salary||0))}</span></div>`;
-    if (Number(c.investment) > 0) {
-        rows += `<div class="formula-line"><span class="formula-label">− Investment</span><span class="formula-value neg">−${fmt(Number(c.investment))}</span></div>`;
-    }
-    cards.forEach((cd, i) => {
-        if (Number(cd.amount) > 0) {
-            rows += `<div class="formula-line"><span class="formula-label">− ${escapeHTML(cd.name || cardNames[i] || `Card ${i+1}`)}</span><span class="formula-value neg">−${fmt(Number(cd.amount))}</span></div>`;
-        }
+function renderFormula() {
+  const s = data.settings;
+  const salary = Number(s.salary||0);
+  const goal = Number(s.savingsGoal||0);
+  const bills = data.bills;
+  const billsTotal = totalBills();
+  const sp = spendable();
+
+  if (salary === 0 && bills.length === 0 && goal === 0) {
+    document.getElementById('formulaBody').innerHTML = `<div class="empty" style="padding:30px 16px"><div class="empty-icon">⚙️</div><h3>Not set up yet</h3><p>Add your salary, bills, and savings goal.</p><button class="btn btn-primary" onclick="openSettings()" style="flex:0;display:inline-block">Set up →</button></div>`;
+    return;
+  }
+
+  let rows = `<div class="formula-row"><span class="formula-name">Take-home salary</span><span class="formula-val pos">${fmt(salary)}</span></div>`;
+  if (bills.length > 0) {
+    rows += `<div class="formula-row"><span class="formula-name">− Total bills</span><span class="formula-val neg">−${fmt(billsTotal)}</span></div>`;
+    bills.forEach(b => {
+      rows += `<div class="formula-row sub"><span class="formula-name">${esc(b.name)}</span><span class="formula-val" style="color:var(--label3);font-size:12px">−${fmt(Number(b.amount))}</span></div>`;
     });
-    rows += `<div class="formula-line total"><span>= Spendable</span><span class="${spendable >= 0 ? 'pos' : 'neg'}">${fmt(spendable)}</span></div>`;
-    return rows;
+  }
+  if (goal > 0) {
+    rows += `<div class="formula-row"><span class="formula-name">− Savings goal</span><span class="formula-val neg">−${fmt(goal)}</span></div>`;
+  }
+  rows += `<div class="formula-row total"><span>= Spendable</span><span class="${sp>=0?'pos':'neg'}">${fmt(sp)}</span></div>`;
+  document.getElementById('formulaBody').innerHTML = rows;
 }
 
-function renderDashTrend() {
-    const el = document.getElementById('dashTrendBody');
-    const cycles = sortedCycles().slice(0, 6).reverse();
-    if (cycles.length < 2) {
-        el.innerHTML = `<div class="empty" style="padding:34px 20px"><p style="color:var(--label3);font-size:12px">Log at least 2 pay cycles to see your spendable trend.</p></div>`;
-        return;
-    }
-    const vals = cycles.map(c => cycleSpendable(c));
-    const latest = vals[vals.length - 1];
-    const prev = vals[vals.length - 2];
-    const up = latest >= prev;
-    const neg = latest < 0;
-    const min = Math.min(...vals, 0), max = Math.max(...vals, 0);
-    const range = (max - min) || 1;
-    const pad = 12, span = 100 - 2 * pad;
-    const pts = vals.map((v, i) => [(i / (vals.length-1)) * 100, pad + (1 - (v - min) / range) * span]);
-    const line = pts.map((p, i) => `${i===0?'M':'L'}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ');
-    const area = `${line} L100,100 L0,100 Z`;
-    const last = pts[pts.length - 1];
-    const deltaPct = prev !== 0 ? Math.abs(((latest - prev) / Math.abs(prev)) * 100).toFixed(0) + '%' : (up ? 'Up' : 'Down');
-    const fillTop = neg ? 'rgba(239,68,68,0.35)' : 'rgba(34,197,94,0.35)';
-    const fillBot = neg ? 'rgba(239,68,68,0)' : 'rgba(34,197,94,0)';
-    el.innerHTML = `
-        <div class="trend-figure">
-            <span class="trend-big ${neg ? 'neg' : 'pos'}">${fmt(latest)}</span>
-            <span class="trend-pill ${up ? 'up' : 'down'}">${up ? '▲' : '▼'} ${deltaPct}</span>
-        </div>
-        <div class="trend-caption">Spendable · ${fmtDate(cycles[cycles.length-1].date)}</div>
-        <div class="trend-chart">
-            <svg class="trend-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-                <defs><linearGradient id="tGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stop-color="${fillTop}"/>
-                    <stop offset="100%" stop-color="${fillBot}"/>
-                </linearGradient></defs>
-                <path d="${area}" fill="url(#tGrad)"/>
-                <path class="trend-line ${neg ? 'neg' : 'green'}" d="${line}"/>
-            </svg>
-            <div class="trend-dot ${neg ? 'neg' : 'green'}" style="left:${last[0]}%;top:${last[1]}%"></div>
-        </div>
-        <div class="trend-axis">${cycles.map(c => `<span>${fmtDate(c.date).split(',')[0].split(' ')[0].slice(0,3)}</span>`).join('')}</div>`;
-}
+function renderGoalCard() {
+  const goal = Number(data.settings.savingsGoal||0);
+  const delta = savedThisMonth();
+  const cur = latestSavings();
+  const goalEl = document.getElementById('goalBody');
+  const badgeEl = document.getElementById('goalBadge');
 
-// ─── Render: Payday page ───
-function renderPayday() {
-    const insightEl = document.getElementById('paydayInsight');
-    if (!isCurrentCycleLogged()) {
-        const payDay = data.settings.payDay || 14;
-        insightEl.innerHTML = `<div class="insight-box info"><div class="insight-icon">📅</div><div><div class="insight-title">This cycle hasn't been logged</div><div class="insight-msg">Your pay cycle starts on the ${payDay}th. Log your salary, investment, and card bills to see how much you have to spend.</div></div></div>`;
-    } else {
-        insightEl.innerHTML = '';
-    }
+  if (goal === 0) {
+    badgeEl.innerHTML = '';
+    goalEl.innerHTML = `<div class="empty" style="padding:24px 16px"><div class="empty-icon">🎯</div><h3>No goal set</h3><p>Set a monthly savings goal in Settings to track your progress.</p><button class="btn btn-primary" onclick="openSettings()" style="flex:0;display:inline-block">Set goal →</button></div>`;
+    return;
+  }
 
-    const el = document.getElementById('cycleList');
-    const cycles = sortedCycles();
-    if (cycles.length === 0) {
-        el.innerHTML = emptyHTML('📅', 'No payday logs yet', 'Log your salary, investment, and credit card bills after each payday.', '');
-        return;
-    }
-    el.innerHTML = cycles.map(c => cycleCardHTML(c)).join('');
-}
+  if (delta === null) {
+    badgeEl.innerHTML = '';
+    goalEl.innerHTML = `<div style="font-size:13px;color:var(--label2);padding:8px 0">Target: <b>${fmt(goal)}/month</b><br><br><span style="color:var(--label3);font-size:12px">Log two months to see progress.</span></div>`;
+    return;
+  }
 
-function cycleCardHTML(c) {
-    const spendable = cycleSpendable(c);
-    const cardNames = data.settings.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-    const cards = c.cards || [];
+  const pct = Math.min(100, Math.max(0, (delta / goal) * 100));
+  const onTrack = delta >= goal;
+  const behind = delta < 0;
+  const cls = behind ? 'behind' : onTrack ? 'done' : '';
+  badgeEl.innerHTML = `<span class="chip ${onTrack?'green':behind?'red':'grey'}">${onTrack?'On track':behind?'Deficit':'Behind'}</span>`;
 
-    let formulaRows = `<div class="formula-line"><span class="formula-label">Take-home salary</span><span class="formula-value pos">${fmt(Number(c.salary||0))}</span></div>`;
-    if (Number(c.investment) > 0) {
-        formulaRows += `<div class="formula-line"><span class="formula-label">− Investment</span><span class="formula-value neg">−${fmt(Number(c.investment))}</span></div>`;
-    }
-    cards.forEach((cd, i) => {
-        if (Number(cd.amount) > 0) {
-            formulaRows += `<div class="formula-line"><span class="formula-label">− ${escapeHTML(cd.name || cardNames[i] || `Card ${i+1}`)}</span><span class="formula-value neg">−${fmt(Number(cd.amount))}</span></div>`;
-        }
-    });
-    if (c.note) {
-        formulaRows += `<div class="formula-line"><span class="formula-label" style="color:var(--label3);font-size:11px">${escapeHTML(c.note)}</span><span></span></div>`;
-    }
-    return `<div class="cycle-card">
-        <div class="cycle-header">
-            <span class="cycle-date-label">${fmtDate(c.date)}</span>
-            <span class="cycle-spendable ${spendable >= 0 ? 'pos' : 'neg'}">Spendable: ${fmt(spendable)}</span>
-        </div>
-        <div class="cycle-body">
-            ${formulaRows}
-            <div class="formula-line total"><span>= Spendable</span><span class="${spendable >= 0 ? 'pos' : 'neg'}">${fmt(spendable)}</span></div>
-            <div class="cycle-actions">
-                <button class="row-btn" onclick="editCycle('${c.id}')">Edit</button>
-                <button class="row-btn del" onclick="deleteCycle('${c.id}')">Delete</button>
-            </div>
-        </div>
-    </div>`;
-}
-
-// ─── Render: Savings ───
-function renderSavings() {
-    const series = savingsSeries();
-    const target = Number(data.settings.savingsTarget) || 0;
-    const currentBalance = series.length ? series[series.length-1].balance : 0;
-    document.getElementById('savingsTargetInput').value = target || '';
-    document.getElementById('savingsBalanceInput').value = currentBalance || '';
-
-    let savedThisMonth = null;
-    if (series.length >= 2) savedThisMonth = series[series.length-1].balance - series[series.length-2].balance;
-
-    document.getElementById('savCurrent').textContent = fmt(currentBalance);
-    document.getElementById('savCurrentSub').textContent = series.length ? `As of ${fmtMonth(series[series.length-1].month)}` : 'Not logged yet';
-    document.getElementById('savThisMonth').textContent = savedThisMonth === null ? '—' : fmt(savedThisMonth);
-    document.getElementById('savThisMonthSub').textContent = savedThisMonth === null
-        ? (series.length ? 'Update next month' : 'Log to start')
-        : (target > 0 ? (savedThisMonth >= target ? `Hit ${fmt(target)} ✓` : `${fmt(target - savedThisMonth)} below target`) : 'logged');
-    document.getElementById('savProjected').textContent = fmt(currentBalance + target * 12);
-    document.getElementById('savProjectedSub').textContent = `at ${fmt(target)}/mo`;
-
-    const badge = document.getElementById('savingsStatusBadge');
-    let headline, cls = '';
-    if (savedThisMonth === null) {
-        badge.textContent = series.length ? 'Logged' : 'Start';
-        headline = series.length
-            ? `Starting balance: <b>${fmt(currentBalance)}</b>. Update again next month to track how much you saved.`
-            : `Enter your current savings balance to begin tracking.`;
-    } else {
-        const onTrack = savedThisMonth >= target;
-        badge.textContent = target > 0 ? (onTrack ? 'On track' : 'Behind') : 'Logged';
-        if (savedThisMonth < 0) {
-            cls = 'behind';
-            headline = `Your savings dropped <b>${fmt(Math.abs(savedThisMonth))}</b> since last update.`;
-        } else if (target <= 0) {
-            headline = `You saved <b>${fmt(savedThisMonth)}</b> since last update.`;
-        } else if (onTrack) {
-            cls = 'ahead';
-            headline = `You saved <b>${fmt(savedThisMonth)}</b> — ${fmt(savedThisMonth - target)} over your ${fmt(target)} target. 🎉`;
-        } else {
-            cls = 'behind';
-            headline = `You saved <b>${fmt(savedThisMonth)}</b> — ${fmt(target - savedThisMonth)} short of your ${fmt(target)} target.`;
-        }
-    }
-
-    const projHTML = [3, 6, 12].map(m => `<div class="proj-chip">
-        <div class="proj-chip-label">In ${m} months</div>
-        <div class="proj-chip-val">${fmt(currentBalance + target * m)}</div>
-        <div class="proj-chip-sub">at ${fmt(target)}/mo</div>
-    </div>`).join('');
-
-    const barPct = (target > 0 && savedThisMonth !== null) ? Math.max(0, Math.min(100, (savedThisMonth/target)*100)) : 0;
-    const onTrackNow = savedThisMonth !== null && savedThisMonth >= target;
-
-    document.getElementById('savingsStatus').innerHTML = `
-        <div class="savings-headline ${cls}">${headline}</div>
-        ${(target > 0 && savedThisMonth !== null) ? `<div class="goal-track" style="margin-bottom:14px"><div class="goal-fill ${onTrackNow ? 'done':''}" style="width:${barPct}%"></div></div>` : ''}
-        ${savingsChartHTML(series)}
-        <div class="savings-proj">${projHTML}</div>
-        ${savingsHistoryHTML(series, target)}`;
-}
-
-function savingsChartHTML(series) {
-    if (series.length < 2) return '';
-    const vals = series.map(s => s.balance);
-    const min = Math.min(...vals), max = Math.max(...vals);
-    const range = (max - min) || 1;
-    const pad = 12, span = 100 - 2 * pad;
-    const pts = vals.map((v, i) => [(i/(vals.length-1))*100, pad + (1-(v-min)/range)*span]);
-    const line = pts.map((p,i) => `${i===0?'M':'L'}${p[0].toFixed(2)},${p[1].toFixed(2)}`).join(' ');
-    const area = `${line} L100,100 L0,100 Z`;
-    const last = pts[pts.length-1];
-    return `<div class="trend-chart" style="height:120px;margin-bottom:6px">
-        <svg class="trend-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
-            <defs><linearGradient id="svGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="rgba(34,197,94,0.4)"/>
-                <stop offset="100%" stop-color="rgba(34,197,94,0)"/>
-            </linearGradient></defs>
-            <path d="${area}" fill="url(#svGrad)"/>
-            <path class="trend-line green" d="${line}"/>
-        </svg>
-        <div class="trend-dot green" style="left:${last[0]}%;top:${last[1]}%"></div>
+  goalEl.innerHTML = `
+    <div style="font-size:28px;font-weight:300;letter-spacing:-1px;margin-bottom:4px;color:${behind?'var(--red)':onTrack?'var(--green)':'var(--label)'}">${(delta>=0?'+':'')}${fmt(delta)}</div>
+    <div style="font-size:12px;color:var(--label3);margin-bottom:14px">saved · target ${fmt(goal)}</div>
+    <div class="goal-bar-wrap">
+      <div class="goal-bar-track"><div class="goal-bar-fill ${cls}" style="width:${pct}%"></div></div>
     </div>
-    <div class="trend-axis" style="margin-bottom:16px">${series.map(s => `<span>${fmtMonth(s.month).split(' ')[0].slice(0,3)}</span>`).join('')}</div>`;
+    <div class="goal-meta"><span>${pct.toFixed(0)}% of goal</span><span>${onTrack ? fmt(delta-goal)+' over' : fmt(goal-delta)+' to go'}</span></div>`;
 }
 
-function savingsHistoryHTML(series, target) {
-    if (series.length === 0) return '';
-    const rows = [...series].reverse().map((s, i, arr) => {
-        const prev = arr[i+1];
-        const delta = prev ? s.balance - prev.balance : null;
-        let badge = delta !== null
-            ? `<span class="recur-due ${delta < 0 ? 'soon' : (target > 0 && delta >= target ? 'logged' : 'pending')}">${delta >= 0 ? '+' : ''}${fmt(delta)}${target > 0 && delta >= target ? ' ✓' : ''}</span>`
-            : `<span class="recur-due pending">Start</span>`;
-        return `<div class="upcoming-row">
-            <div><div class="recur-name">${fmtMonth(s.month)}</div></div>
-            <div style="display:flex;align-items:center;gap:10px">
-                ${badge}
-                <span style="font-weight:700;white-space:nowrap;min-width:90px;text-align:right">${fmt(s.balance)}</span>
-                <button class="row-btn del" onclick="deleteSavings('${s.month}')">×</button>
-            </div>
-        </div>`;
-    }).join('');
-    return `<div style="margin-top:18px;border-top:1px solid var(--sep);padding-top:14px">
-        <div style="font-size:11px;font-weight:700;color:var(--label3);text-transform:uppercase;letter-spacing:0.6px;margin-bottom:8px">Monthly history</div>
-        ${rows}</div>`;
-}
+// ── Render: History ──
+function renderHistory() {
+  const entries = sortedSavings().reverse();
+  document.getElementById('histCount').textContent = `${entries.length} entr${entries.length===1?'y':'ies'}`;
+  if (entries.length === 0) {
+    document.getElementById('histBody').innerHTML = `<div class="empty"><div class="empty-icon">📅</div><h3>No entries yet</h3><p>Log your savings balance each month to build a history.</p></div>`;
+    return;
+  }
+  // compute deltas
+  const sorted = sortedSavings();
+  const deltaMap = {};
+  sorted.forEach((e, i) => {
+    deltaMap[e.month] = i > 0 ? e.balance - sorted[i-1].balance : null;
+  });
 
-function setSavingsTarget(val) {
-    data.settings.savingsTarget = Math.max(0, parseFloat(val) || 0);
-    saveData(); renderAll();
-}
-function setSavingsBalance(val) {
-    const bal = Math.max(0, parseFloat(val) || 0);
-    const key = currentMonthKey();
-    const existing = data.savings.find(s => s.month === key);
-    if (existing) existing.balance = bal;
-    else data.savings.push({ month: key, balance: bal });
-    saveData(); renderAll(); toast('Savings updated');
-}
-function deleteSavings(month) {
-    data.savings = data.savings.filter(s => s.month !== month);
-    saveData(); renderAll();
-}
-
-// ─── Render: Accounts ───
-function renderAccounts() {
-    document.getElementById('acctNetWorth').textContent = fmt(netWorth());
-    document.getElementById('acctAssets').textContent = fmt(sumAssets());
-    document.getElementById('acctLiabilities').textContent = fmt(sumLiabilities());
-    document.getElementById('acctCount').textContent = data.accounts.length;
-    const el = document.getElementById('acctList');
-    if (data.accounts.length === 0) {
-        el.innerHTML = emptyHTML('🏦', 'No accounts yet', 'Add bank accounts, investments, and debts to track net worth.', `<button class="btn btn-primary" onclick="openAcctModal()" style="flex:0;display:inline-block;margin-top:8px">+ Add account</button>`);
-        return;
-    }
-    const sorted = [...data.accounts].sort((a, b) => Number(b.balance) - Number(a.balance));
-    el.innerHTML = `<table><thead><tr><th>Account</th><th>Type</th><th>Note</th><th class="r">Balance</th><th></th></tr></thead>
-        <tbody>${sorted.map(acctRowHTML).join('')}</tbody></table>`;
-}
-function acctRowHTML(a) {
-    const isAsset = ASSET_TYPES.has(a.type);
-    const typeLabel = a.type === 'retirement' ? 'Retirement/CPF' : a.type.charAt(0).toUpperCase() + a.type.slice(1);
+  const rows = entries.map(e => {
+    const d = deltaMap[e.month];
+    const deltaCell = d !== null
+      ? `<span class="${d>=0?'pos':'neg'}">${d>=0?'+':''}${fmt(d)}</span>`
+      : `<span style="color:var(--label3)">—</span>`;
     return `<tr>
-        <td style="font-weight:600">${escapeHTML(a.name)}</td>
-        <td><span class="acct-type ${isAsset ? 'asset' : 'liability'}">${typeLabel}</span></td>
-        <td style="color:var(--label3);font-size:12px">${escapeHTML(a.note || '')}</td>
-        <td class="r ${isAsset ? 'pos' : 'neg'}" style="font-weight:600;white-space:nowrap">${isAsset ? '' : '−'}${fmt(Math.abs(Number(a.balance)))}</td>
-        <td class="r"><div class="row-actions">
-            <button class="row-btn" onclick="editAcct('${a.id}')">Edit</button>
-            <button class="row-btn del" onclick="deleteAcct('${a.id}')">Delete</button>
-        </div></td>
+      <td style="font-weight:500">${fmtMonth(e.month)}</td>
+      <td class="r" style="font-weight:600">${fmt(e.balance)}</td>
+      <td class="r">${deltaCell}</td>
+      <td class="r"><div class="row-acts">
+        <button class="row-btn" onclick="editLog('${e.month}')">Edit</button>
+        <button class="row-btn del" onclick="deleteLog('${e.month}')">Delete</button>
+      </div></td>
     </tr>`;
+  }).join('');
+  document.getElementById('histBody').innerHTML = `<table><thead><tr><th>Month</th><th class="r">Balance</th><th class="r">Saved</th><th></th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
-// ─── Render: Goals ───
-function renderGoals() {
-    document.getElementById('goalsSub').textContent = data.goals.length === 0 ? 'Track progress toward what matters.' : `${data.goals.length} goal${data.goals.length === 1 ? '' : 's'}`;
-    const el = document.getElementById('goalsList');
-    if (data.goals.length === 0) {
-        el.innerHTML = emptyHTML('🎯', 'No goals yet', 'Set a target — emergency fund, vacation, anything.', `<button class="btn btn-primary" onclick="openGoalModal()" style="flex:0;display:inline-block;margin-top:8px">+ New goal</button>`);
-        return;
-    }
-    el.innerHTML = `<div class="goal-grid">` + data.goals.map(goalCardHTML).join('') + `</div>`;
-}
-function goalCardHTML(g) {
-    const pct = Math.min(100, (Number(g.current) / Number(g.target)) * 100);
-    const done = pct >= 100;
-    const remaining = Math.max(0, Number(g.target) - Number(g.current));
-    const deadlineStr = g.deadline ? fmtDate(g.deadline) : 'No deadline';
-    let daysStr = '';
-    if (g.deadline && !done) {
-        const days = Math.ceil((new Date(g.deadline) - new Date()) / (1000*60*60*24));
-        daysStr = days > 0 ? `· ${days} days left` : `· overdue`;
-    }
-    let pace = '';
-    if (done) {
-        pace = `<div class="goal-pace ahead">✓ Goal reached — nicely done.</div>`;
-    } else if (g.deadline) {
-        const now = new Date(), dl = new Date(g.deadline);
-        const monthsLeft = Math.max(1, (dl.getFullYear()-now.getFullYear())*12+(dl.getMonth()-now.getMonth()));
-        if (dl < now) {
-            pace = `<div class="goal-pace behind">Past deadline — ${fmt(remaining)} still to go.</div>`;
-        } else {
-            pace = `<div class="goal-pace">Save <b>${fmt(remaining/monthsLeft)}</b>/mo to reach this in ${monthsLeft} month${monthsLeft===1?'':'s'}.</div>`;
-        }
-    }
-    return `<div class="goal-card">
-        <div class="goal-head">
-            <div><div class="goal-name">${escapeHTML(g.name)}</div><div class="goal-deadline">${deadlineStr} ${daysStr}</div></div>
-            <div class="goal-pct">${pct.toFixed(0)}%</div>
+// ── Render: Bills ──
+function renderBills() {
+  const bills = data.bills;
+  const total = totalBills();
+  document.getElementById('billTotal').textContent = bills.length ? `Total: ${fmt(total)}/mo` : '';
+
+  if (bills.length === 0) {
+    document.getElementById('billList').innerHTML = `<div class="empty"><div class="empty-icon">📄</div><h3>No bills added</h3><p>Add your regular monthly expenses — rent, subscriptions, utilities.</p></div>`;
+  } else {
+    document.getElementById('billList').innerHTML = bills.map(b => `
+      <div class="bill-row">
+        <span class="bill-name">${esc(b.name)}</span>
+        <span class="bill-amt">−${fmt(Number(b.amount))}</span>
+        <div class="bill-actions">
+          <button class="row-btn" onclick="editBill('${b.id}')">Edit</button>
+          <button class="row-btn del" onclick="deleteBill('${b.id}')">Delete</button>
         </div>
-        <div class="goal-amounts"><span class="goal-current">${fmt(Number(g.current))}</span><span class="goal-target">/ ${fmt(Number(g.target))}</span></div>
-        <div class="goal-track"><div class="goal-fill ${done?'done':''}" style="width:${pct}%"></div></div>
-        ${pace}
-        <div class="goal-meta">
-            <span>${done ? '✓ Goal reached' : fmt(remaining) + ' to go'}</span>
-            ${g.note ? `<span style="opacity:0.7">${escapeHTML(g.note)}</span>` : ''}
-        </div>
-        <div class="goal-actions">
-            <button class="row-btn" onclick="openGoalUpdate('${g.id}')">+ Add saved</button>
-            <button class="row-btn" onclick="editGoal('${g.id}')">Edit</button>
-            <button class="row-btn del" onclick="deleteGoal('${g.id}')">Delete</button>
-        </div>
-    </div>`;
-}
+      </div>`).join('');
+  }
 
-// ─── Dashboard quick-input save ───
-function getOrCreateCurrentCycle() {
-    let cycle = latestCycle();
-    if (!cycle) {
-        cycle = { id: uid(), date: currentCycleStart(), salary: 0, investment: 0, cards: [{name:'Card 1',amount:0},{name:'Card 2',amount:0},{name:'Card 3',amount:0}], note: '' };
-        data.cycles.push(cycle);
-    }
-    return cycle;
-}
-function flashChip(id) {
-    const el = document.getElementById(id);
-    el.classList.add('show');
-    setTimeout(() => el.classList.remove('show'), 1600);
-}
-function saveDashInvestment(val) {
-    const cycle = getOrCreateCurrentCycle();
-    const idx = data.cycles.findIndex(x => x.id === cycle.id);
-    data.cycles[idx].investment = parseFloat(val) || 0;
-    saveData(); flashChip('dashInvestmentChip'); renderAll();
-}
-function saveDashCards() {
-    const cycle = getOrCreateCurrentCycle();
-    const idx = data.cycles.findIndex(x => x.id === cycle.id);
-    const cardNames = data.settings.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-    data.cycles[idx].cards = [0,1,2].map(i => ({
-        name: cardNames[i] || `Card ${i+1}`,
-        amount: parseFloat(document.getElementById(`dashCard${i}`).value) || 0
-    }));
-    saveData(); flashChip('dashCardsChip'); renderAll();
-}
-
-// ─── Cycle CRUD ───
-function openPaydayModal() {
-    cycleEditId = null;
-    document.getElementById('paydayModalTitle').textContent = 'Log payday';
-    document.getElementById('paydaySaveBtn').textContent = 'Save';
-    document.getElementById('payDate').value = currentCycleStart();
-    document.getElementById('paySalary').value = '';
-    document.getElementById('payInvestment').value = '';
-    document.getElementById('payCard0').value = '';
-    document.getElementById('payCard1').value = '';
-    document.getElementById('payCard2').value = '';
-    document.getElementById('payNote').value = '';
-    updateCardLabels();
-    updateSpendablePreview();
-    document.getElementById('paydayModal').classList.add('open');
-    document.getElementById('paySalary').focus();
-}
-function editCycle(id) {
-    const c = data.cycles.find(x => x.id === id);
-    if (!c) return;
-    cycleEditId = id;
-    document.getElementById('paydayModalTitle').textContent = 'Edit cycle';
-    document.getElementById('paydaySaveBtn').textContent = 'Save changes';
-    document.getElementById('payDate').value = c.date;
-    document.getElementById('paySalary').value = c.salary || '';
-    document.getElementById('payInvestment').value = c.investment || '';
-    const cards = c.cards || [];
-    [0,1,2].forEach(i => {
-        document.getElementById(`payCard${i}`).value = cards[i] ? cards[i].amount : '';
-    });
-    document.getElementById('payNote').value = c.note || '';
-    updateCardLabels();
-    updateSpendablePreview();
-    document.getElementById('paydayModal').classList.add('open');
-}
-function updateCardLabels() {
-    const names = data.settings.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-    [0,1,2].forEach(i => {
-        document.getElementById(`payCardLabel${i}`).textContent = names[i] || `Card ${i+1}`;
-    });
-}
-function updateSpendablePreview() {
-    const salary = parseFloat(document.getElementById('paySalary').value) || 0;
-    const inv = parseFloat(document.getElementById('payInvestment').value) || 0;
-    const c0 = parseFloat(document.getElementById('payCard0').value) || 0;
-    const c1 = parseFloat(document.getElementById('payCard1').value) || 0;
-    const c2 = parseFloat(document.getElementById('payCard2').value) || 0;
-    const spendable = salary - inv - c0 - c1 - c2;
-    const el = document.getElementById('spendablePreview');
-    el.className = 'spendable-preview' + (spendable < 0 ? ' neg' : '');
-    document.getElementById('spendablePreviewValue').textContent = fmt(spendable);
-}
-function savePayday() {
-    const date = document.getElementById('payDate').value;
-    const salary = parseFloat(document.getElementById('paySalary').value);
-    const investment = parseFloat(document.getElementById('payInvestment').value) || 0;
-    const note = document.getElementById('payNote').value.trim();
-    const cardNames = data.settings.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-
-    if (!date) { toast('Pick a date'); return; }
-    if (!salary || salary <= 0) { toast('Enter your take-home salary'); return; }
-
-    const cards = [0,1,2].map(i => ({
-        name: cardNames[i] || `Card ${i+1}`,
-        amount: parseFloat(document.getElementById(`payCard${i}`).value) || 0
-    }));
-
-    const cycle = { id: cycleEditId || uid(), date, salary, investment, cards, note };
-    if (cycleEditId) {
-        const idx = data.cycles.findIndex(x => x.id === cycleEditId);
-        data.cycles[idx] = cycle;
-    } else {
-        data.cycles.push(cycle);
-    }
-    saveData();
-    closeModal('paydayModal');
-    toast(cycleEditId ? 'Updated' : 'Cycle logged');
-    cycleEditId = null;
-    renderAll();
-}
-function deleteCycle(id) {
-    if (!confirm('Delete this cycle log?')) return;
-    data.cycles = data.cycles.filter(x => x.id !== id);
-    saveData(); toast('Deleted'); renderAll();
-}
-
-// ─── Account CRUD ───
-function openAcctModal() {
-    acctEditId = null;
-    document.getElementById('acctModalTitle').textContent = 'Add account';
-    document.getElementById('acctSaveBtn').textContent = 'Add account';
-    document.getElementById('acctName').value = '';
-    document.getElementById('acctTypeSel').value = 'checking';
-    document.getElementById('acctBalance').value = '';
-    document.getElementById('acctNote').value = '';
-    document.getElementById('acctModal').classList.add('open');
-    document.getElementById('acctName').focus();
-}
-function editAcct(id) {
-    const a = data.accounts.find(x => x.id === id);
-    if (!a) return;
-    acctEditId = id;
-    document.getElementById('acctModalTitle').textContent = 'Edit account';
-    document.getElementById('acctSaveBtn').textContent = 'Save changes';
-    document.getElementById('acctName').value = a.name;
-    document.getElementById('acctTypeSel').value = a.type;
-    document.getElementById('acctBalance').value = a.balance;
-    document.getElementById('acctNote').value = a.note || '';
-    document.getElementById('acctModal').classList.add('open');
-}
-function saveAcct() {
-    const name = document.getElementById('acctName').value.trim();
-    const type = document.getElementById('acctTypeSel').value;
-    const balance = parseFloat(document.getElementById('acctBalance').value);
-    const note = document.getElementById('acctNote').value.trim();
-    if (!name) { toast('Enter a name'); return; }
-    if (isNaN(balance)) { toast('Enter a balance'); return; }
-    const acct = { id: acctEditId || uid(), name, type, balance, note };
-    if (acctEditId) {
-        data.accounts[data.accounts.findIndex(x => x.id === acctEditId)] = acct;
-    } else {
-        data.accounts.push(acct);
-    }
-    saveData(); closeModal('acctModal'); toast(acctEditId ? 'Updated' : 'Added'); acctEditId = null; renderAll();
-}
-function deleteAcct(id) {
-    if (!confirm('Delete this account?')) return;
-    data.accounts = data.accounts.filter(x => x.id !== id);
-    saveData(); toast('Deleted'); renderAll();
-}
-
-// ─── Goal CRUD ───
-function openGoalModal() {
-    goalEditId = null;
-    document.getElementById('goalModalTitle').textContent = 'New goal';
-    document.getElementById('goalSaveBtn').textContent = 'Save goal';
-    ['goalName','goalTarget','goalDeadline','goalNote'].forEach(id => document.getElementById(id).value = '');
-    document.getElementById('goalCurrent').value = '0';
-    document.getElementById('goalModal').classList.add('open');
-    document.getElementById('goalName').focus();
-}
-function editGoal(id) {
-    const g = data.goals.find(x => x.id === id);
-    if (!g) return;
-    goalEditId = id;
-    document.getElementById('goalModalTitle').textContent = 'Edit goal';
-    document.getElementById('goalSaveBtn').textContent = 'Save changes';
-    document.getElementById('goalName').value = g.name;
-    document.getElementById('goalTarget').value = g.target;
-    document.getElementById('goalCurrent').value = g.current;
-    document.getElementById('goalDeadline').value = g.deadline || '';
-    document.getElementById('goalNote').value = g.note || '';
-    document.getElementById('goalModal').classList.add('open');
-}
-function saveGoal() {
-    const name = document.getElementById('goalName').value.trim();
-    const target = parseFloat(document.getElementById('goalTarget').value);
-    const current = parseFloat(document.getElementById('goalCurrent').value) || 0;
-    const deadline = document.getElementById('goalDeadline').value;
-    const note = document.getElementById('goalNote').value.trim();
-    if (!name) { toast('Enter a name'); return; }
-    if (!target || target <= 0) { toast('Enter a target amount'); return; }
-    const goal = { id: goalEditId || uid(), name, target, current, deadline, note };
-    if (goalEditId) {
-        data.goals[data.goals.findIndex(x => x.id === goalEditId)] = goal;
-    } else {
-        data.goals.push(goal);
-    }
-    saveData(); closeModal('goalModal'); toast(goalEditId ? 'Updated' : 'Goal saved'); goalEditId = null; renderAll();
-}
-function deleteGoal(id) {
-    if (!confirm('Delete this goal?')) return;
-    data.goals = data.goals.filter(x => x.id !== id);
-    saveData(); toast('Deleted'); renderAll();
-}
-function openGoalUpdate(id) {
-    goalUpdateId = id;
-    document.getElementById('goalAddAmount').value = '';
-    document.getElementById('goalUpdateModal').classList.add('open');
-    document.getElementById('goalAddAmount').focus();
-}
-function applyGoalUpdate() {
-    const amt = parseFloat(document.getElementById('goalAddAmount').value);
-    if (!amt) { toast('Enter an amount'); return; }
-    const g = data.goals.find(x => x.id === goalUpdateId);
-    if (!g) return;
-    g.current = Number(g.current) + amt;
-    saveData(); closeModal('goalUpdateModal'); toast(`+${fmt(amt)} saved`); renderAll();
-}
-
-// ─── Settings ───
-function openSettings() {
-    const s = data.settings;
-    document.getElementById('setCurrency').value = s.currency || 'SGD';
-    document.getElementById('setPayDay').value = s.payDay || 14;
-    const names = s.cardNames || ['Card 1', 'Card 2', 'Card 3'];
-    [0,1,2].forEach(i => document.getElementById(`setCard${i}`).value = names[i] || '');
-    document.getElementById('settingsModal').classList.add('open');
-}
-function saveSettings() {
-    data.settings.currency = document.getElementById('setCurrency').value;
-    data.settings.payDay = Math.min(28, Math.max(1, parseInt(document.getElementById('setPayDay').value) || 14));
-    data.settings.cardNames = [0,1,2].map(i => document.getElementById(`setCard${i}`).value.trim() || `Card ${i+1}`);
-    saveData(); closeModal('settingsModal'); toast('Settings saved'); renderAll();
-}
-
-// ─── Modals / Nav / Theme ───
-function closeModal(id) { document.getElementById(id).classList.remove('open'); }
-function switchPage(page) {
-    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-    document.getElementById('page-' + page).classList.add('active');
-    document.querySelectorAll('.nav-item').forEach(b => b.classList.toggle('active', b.dataset.page === page));
-    const addBtn = document.getElementById('addBtn');
-    if (page === 'accounts') { addBtn.textContent = '+ Add account'; addBtn.onclick = openAcctModal; }
-    else if (page === 'goals') { addBtn.textContent = '+ New goal'; addBtn.onclick = openGoalModal; }
-    else if (page === 'savings') { addBtn.textContent = '↻ Update savings'; addBtn.onclick = () => { document.getElementById('savingsBalanceInput').focus(); }; }
-    else { addBtn.textContent = '+ Log payday'; addBtn.onclick = openPaydayModal; }
-    document.getElementById('sidebar').classList.remove('open');
-    renderAll();
-}
-function toggleTheme() {
-    const next = (data.settings.theme || 'dark') === 'light' ? 'dark' : 'light';
-    data.settings.theme = next;
-    document.documentElement.setAttribute('data-theme', next);
-    saveData();
-}
-function exportData() {
-    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a'); a.href = url; a.download = `finance-${todayISO()}.json`; a.click();
-    URL.revokeObjectURL(url); toast('Exported');
-}
-function importData(file) {
-    const reader = new FileReader();
-    reader.onload = e => {
-        try {
-            const parsed = JSON.parse(e.target.result);
-            if (!parsed.accounts && !parsed.cycles) throw new Error('Invalid format');
-            const cycles = (parsed.cycles || []).length;
-            const accts = (parsed.accounts || []).length;
-            const goals = (parsed.goals || []).length;
-            if (!confirm(`Import ${cycles} pay cycles, ${accts} accounts, ${goals} goals?`)) return;
-            data = {
-                ...structuredClone(DEFAULT_DATA),
-                cycles: parsed.cycles || [],
-                accounts: parsed.accounts || [],
-                goals: parsed.goals || [],
-                savings: parsed.savings || [],
-                settings: { ...DEFAULT_DATA.settings, ...(parsed.settings || {}) }
-            };
-            saveData(); renderAll(); toast('Imported');
-        } catch (err) { toast('Import failed: ' + err.message); }
-    };
-    reader.readAsText(file);
+  // Summary
+  const salary = Number(data.settings.salary||0);
+  const goal = Number(data.settings.savingsGoal||0);
+  const sp = spendable();
+  let summaryHTML = '';
+  if (salary > 0) {
+    summaryHTML = `
+      <div class="formula-row"><span class="formula-name">Salary</span><span class="formula-val pos">${fmt(salary)}</span></div>
+      <div class="formula-row"><span class="formula-name">Bills</span><span class="formula-val neg">−${fmt(total)}</span></div>
+      ${goal>0?`<div class="formula-row"><span class="formula-name">Savings goal</span><span class="formula-val neg">−${fmt(goal)}</span></div>`:''}
+      <div class="formula-row total"><span>Spendable</span><span class="${sp>=0?'pos':'neg'}">${fmt(sp)}</span></div>`;
+  } else {
+    summaryHTML = `<div style="font-size:12.5px;color:var(--label3)">Set your salary in Settings to see the full breakdown.</div>`;
+  }
+  document.getElementById('billSummary').innerHTML = summaryHTML;
 }
 
 function renderAll() {
-    renderDashboard();
-    renderPayday();
-    renderSavings();
-    renderAccounts();
-    renderGoals();
+  renderDashboard();
+  renderHistory();
+  renderBills();
 }
 
-// ─── Wire-up ───
-document.querySelectorAll('.nav-item').forEach(b => b.addEventListener('click', () => switchPage(b.dataset.page)));
-document.getElementById('addBtn').addEventListener('click', openPaydayModal);
+// ── Log savings ──
+function openLog() {
+  logEditMonth = null;
+  document.getElementById('logTitle').textContent = 'Log savings';
+  document.getElementById('logSaveBtn').textContent = 'Save';
+  document.getElementById('logMonth').value = thisMonth();
+  document.getElementById('logBalance').value = '';
+  document.getElementById('logModal').classList.add('open');
+  setTimeout(()=>document.getElementById('logBalance').focus(), 80);
+}
+function editLog(month) {
+  const e = data.savings.find(s=>s.month===month);
+  if (!e) return;
+  logEditMonth = month;
+  document.getElementById('logTitle').textContent = 'Edit entry';
+  document.getElementById('logSaveBtn').textContent = 'Save changes';
+  document.getElementById('logMonth').value = month;
+  document.getElementById('logBalance').value = e.balance;
+  document.getElementById('logModal').classList.add('open');
+}
+function saveLog() {
+  const month = document.getElementById('logMonth').value;
+  const balance = parseFloat(document.getElementById('logBalance').value);
+  if (!month) { toast('Pick a month'); return; }
+  if (isNaN(balance) || balance < 0) { toast('Enter a valid balance'); return; }
+  const existing = data.savings.findIndex(s=>s.month===month);
+  if (existing >= 0) data.savings[existing].balance = balance;
+  else data.savings.push({ month, balance });
+  save(); closeModal('logModal'); toast('Saved'); renderAll();
+}
+function deleteLog(month) {
+  if (!confirm('Delete this entry?')) return;
+  data.savings = data.savings.filter(s=>s.month!==month);
+  save(); toast('Deleted'); renderAll();
+}
+
+// ── Bills ──
+function openBillModal() {
+  billEditId = null;
+  document.getElementById('billModalTitle').textContent = 'Add bill';
+  document.getElementById('billSaveBtn').textContent = 'Add bill';
+  document.getElementById('billName').value = '';
+  document.getElementById('billAmt').value = '';
+  document.getElementById('billModal').classList.add('open');
+  setTimeout(()=>document.getElementById('billName').focus(), 80);
+}
+function editBill(id) {
+  const b = data.bills.find(x=>x.id===id);
+  if (!b) return;
+  billEditId = id;
+  document.getElementById('billModalTitle').textContent = 'Edit bill';
+  document.getElementById('billSaveBtn').textContent = 'Save changes';
+  document.getElementById('billName').value = b.name;
+  document.getElementById('billAmt').value = b.amount;
+  document.getElementById('billModal').classList.add('open');
+}
+function saveBill() {
+  const name = document.getElementById('billName').value.trim();
+  const amount = parseFloat(document.getElementById('billAmt').value);
+  if (!name) { toast('Enter a name'); return; }
+  if (isNaN(amount) || amount < 0) { toast('Enter a valid amount'); return; }
+  if (billEditId) {
+    const idx = data.bills.findIndex(x=>x.id===billEditId);
+    data.bills[idx] = { ...data.bills[idx], name, amount };
+  } else {
+    data.bills.push({ id: uid(), name, amount });
+  }
+  billEditId = null;
+  save(); closeModal('billModal'); toast(billEditId?'Updated':'Added'); renderAll();
+}
+function deleteBill(id) {
+  if (!confirm('Remove this bill?')) return;
+  data.bills = data.bills.filter(x=>x.id!==id);
+  save(); toast('Removed'); renderAll();
+}
+
+// ── Settings ──
+function openSettings() {
+  document.getElementById('setCurrency').value = data.settings.currency||'SGD';
+  document.getElementById('setSalary').value = data.settings.salary||'';
+  document.getElementById('setGoal').value = data.settings.savingsGoal||'';
+  document.getElementById('settingsModal').classList.add('open');
+}
+function saveSettings() {
+  data.settings.currency = document.getElementById('setCurrency').value;
+  data.settings.salary = parseFloat(document.getElementById('setSalary').value)||0;
+  data.settings.savingsGoal = parseFloat(document.getElementById('setGoal').value)||0;
+  save(); closeModal('settingsModal'); toast('Settings saved'); renderAll();
+}
+
+// ── Nav / theme / modals ──
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function switchPage(page) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
+  document.getElementById('logBtn').textContent = page==='bills' ? '+ Add bill' : '+ Log savings';
+  document.getElementById('logBtn').onclick = page==='bills' ? openBillModal : openLog;
+  document.getElementById('side').classList.remove('open');
+  renderAll();
+}
+function toggleTheme() {
+  const next = document.body.dataset.theme==='dark' ? 'light' : 'dark';
+  document.body.dataset.theme = next;
+  data.settings.theme = next;
+  save();
+}
+
+// ── Wire-up ──
+document.querySelectorAll('.nav-btn').forEach(b=>b.addEventListener('click',()=>switchPage(b.dataset.page)));
+document.getElementById('logBtn').addEventListener('click', openLog);
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('settingsBtn').addEventListener('click', openSettings);
-document.getElementById('exportBtn').addEventListener('click', exportData);
-document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
-document.getElementById('importFile').addEventListener('change', e => { if (e.target.files[0]) importData(e.target.files[0]); e.target.value = ''; });
-document.getElementById('menuBtn').addEventListener('click', () => document.getElementById('sidebar').classList.toggle('open'));
-document.querySelectorAll('.overlay').forEach(o => o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); }));
-document.addEventListener('keydown', e => { if (e.key === 'Escape') document.querySelectorAll('.overlay.open').forEach(o => o.classList.remove('open')); });
+document.getElementById('menuBtn').addEventListener('click', ()=>document.getElementById('side').classList.toggle('open'));
+document.querySelectorAll('.overlay').forEach(o=>o.addEventListener('click',e=>{if(e.target===o)o.classList.remove('open')}));
+document.addEventListener('keydown',e=>{if(e.key==='Escape')document.querySelectorAll('.overlay.open').forEach(o=>o.classList.remove('open'))});
 
-document.documentElement.setAttribute('data-theme', data.settings.theme || 'dark');
+document.body.dataset.theme = data.settings.theme || 'dark';
 renderAll();
 </script>
 </body>
