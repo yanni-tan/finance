@@ -183,7 +183,7 @@
             color: #fff;
         }
         .kpi-card.lime {
-            background: linear-gradient(145deg, #fb923c 0%, #fdba74 100%);
+            background: linear-gradient(145deg, #4ade80 0%, #86efac 100%);
             color: var(--navy);
         }
         .kpi-card.peach {
@@ -211,7 +211,7 @@
             display: flex; align-items: center; justify-content: center;
             font-size: 14px; margin-bottom: 16px;
         }
-        .kpi-icon.green  { background: var(--accent-dim); color: var(--navy); }
+        .kpi-icon.green  { background: rgba(34,197,94,0.12); color: var(--green); }
         .kpi-icon.blue   { background: rgba(59,130,246,0.12); }
         .kpi-icon.red    { background: rgba(239,68,68,0.12); }
         .kpi-icon.amber  { background: rgba(245,158,11,0.12); }
@@ -398,11 +398,11 @@
             margin-bottom: 10px;
         }
         .goal-fill {
-            height: 100%; background: linear-gradient(90deg, #db2777, #f472b6);
+            height: 100%; background: linear-gradient(90deg, #4ade80, #86efac);
             border-radius: 4px;
             transition: width .3s;
         }
-        .goal-fill.done { background: linear-gradient(90deg, #ea580c, #fb923c); }
+        .goal-fill.done { background: linear-gradient(90deg, #16a34a, #22c55e); }
         .goal-meta {
             display: flex; align-items: center; justify-content: space-between;
             font-size: 11px; color: var(--label2);
@@ -426,6 +426,7 @@
         /* ── Planning: safe-to-spend ── */
         .safe-amount { font-size: 46px; font-weight: 300; letter-spacing: -2px; line-height: 1; margin-bottom: 12px; }
         .safe-amount.neg { color: var(--red); }
+        .safe-amount.pos { color: var(--green); }
         .safe-formula {
             display: flex; flex-wrap: wrap; gap: 6px 16px;
             font-size: 12px; color: var(--label2); margin-bottom: 16px;
@@ -435,6 +436,7 @@
         .safe-bar { height: 10px; background: var(--surface2); border-radius: 5px; overflow: hidden; display: flex; }
         .safe-bar-spent { height: 100%; background: linear-gradient(90deg,#f43f6b,#ff7a9c); }
         .safe-bar-bills { height: 100%; background: linear-gradient(90deg,#f59e0b,#fbbf24); }
+        .safe-bar-free  { height: 100%; background: linear-gradient(90deg,#4ade80,#86efac); }
         .safe-legend { display: flex; gap: 16px; margin-top: 10px; font-size: 11px; color: var(--label2); }
         .safe-legend i { width: 9px; height: 9px; border-radius: 3px; display: inline-block; margin-right: 5px; vertical-align: middle; }
 
@@ -639,6 +641,8 @@
             filter: drop-shadow(0 0 6px rgba(244,114,182,0.6));
         }
         .trend-line.neg { stroke: var(--red); filter: drop-shadow(0 0 6px rgba(239,68,68,0.5)); }
+        .trend-line.green { stroke: #22c55e; filter: drop-shadow(0 0 6px rgba(34,197,94,0.5)); }
+        .trend-dot.green { border-color: #22c55e; box-shadow: 0 0 12px rgba(34,197,94,0.8); }
         [data-theme="light"] .trend-line { stroke: #db2777; filter: drop-shadow(0 0 4px rgba(219,39,119,0.35)); }
         [data-theme="light"] .trend-line.neg { stroke: var(--red); }
         [data-theme="light"] .trend-dot { border-color: #db2777; box-shadow: 0 0 10px rgba(219,39,119,0.5); }
@@ -755,7 +759,6 @@
                 <button class="util-btn" id="exportBtn" title="Export data">Export</button>
                 <button class="util-btn" id="importBtn" title="Import data">Import</button>
             </div>
-            <button class="util-btn" id="resetBtn" title="Erase all data" style="width:100%;margin-top:6px;color:var(--red);border-color:rgba(239,68,68,0.3)">Reset all data</button>
         </div>
     </aside>
 
@@ -1274,6 +1277,7 @@ const DEFAULT_DATA = {
     budgets: {},
     recurring: [],
     savings: [],
+    cards: [],
     cardSpend: [],
     settings: { currency: 'USD', theme: 'dark', savingsTarget: 5000, savingsBalance: 61143 }
 };
@@ -1484,7 +1488,7 @@ function renderPlanSummaryDash() {
     const spentPct = Math.min(100, (s.spent / incBase) * 100);
     const billsPct = Math.min(100 - spentPct, (s.upcomingBills / incBase) * 100);
     safeEl.innerHTML = `
-        <div class="safe-amount ${s.safe < 0 ? 'neg' : ''}">${fmt(s.safe)}</div>
+        <div class="safe-amount ${s.safe < 0 ? 'neg' : 'pos'}">${fmt(s.safe)}</div>
         <div class="safe-formula">
             <span><b>${fmt(s.expectedIncome)}</b> income</span>
             <span class="op">−</span>
@@ -1497,11 +1501,12 @@ function renderPlanSummaryDash() {
         <div class="safe-bar">
             <div class="safe-bar-spent" style="width:${spentPct}%"></div>
             <div class="safe-bar-bills" style="width:${billsPct}%"></div>
+            <div class="safe-bar-free" style="flex:1"></div>
         </div>
         <div class="safe-legend">
             <span><i style="background:#f43f6b"></i>Card spend</span>
             <span><i style="background:#f59e0b"></i>Bills</span>
-            <span><i style="background:var(--surface2)"></i>Free</span>
+            <span><i style="background:#22c55e"></i>Free</span>
         </div>`;
 
     const upEl = document.getElementById('upcomingBody');
@@ -1641,13 +1646,13 @@ function savingsChartHTML(series) {
     return `<div class="trend-chart" style="height:120px;margin-bottom:6px">
         <svg class="trend-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
             <defs><linearGradient id="svGrad" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stop-color="rgba(244,114,182,0.4)"/>
-                <stop offset="100%" stop-color="rgba(244,114,182,0)"/>
+                <stop offset="0%" stop-color="rgba(34,197,94,0.4)"/>
+                <stop offset="100%" stop-color="rgba(34,197,94,0)"/>
             </linearGradient></defs>
             <path d="${area}" fill="url(#svGrad)"/>
-            <path class="trend-line" d="${line}"/>
+            <path class="trend-line green" d="${line}"/>
         </svg>
-        <div class="trend-dot" style="left:${last[0]}%;top:${last[1]}%"></div>
+        <div class="trend-dot green" style="left:${last[0]}%;top:${last[1]}%"></div>
     </div>
     <div class="trend-axis" style="margin-bottom:16px">${series.map(s => `<span>${fmtMonth(s.month).split(' ')[0].slice(0, 3)}</span>`).join('')}</div>`;
 }
@@ -2642,7 +2647,6 @@ document.getElementById('addBtn').addEventListener('click', openTxModal);
 document.getElementById('themeBtn').addEventListener('click', toggleTheme);
 document.getElementById('exportBtn').addEventListener('click', exportData);
 document.getElementById('importBtn').addEventListener('click', () => document.getElementById('importFile').click());
-document.getElementById('resetBtn').addEventListener('click', resetData);
 document.getElementById('importFile').addEventListener('change', e => {
     if (e.target.files[0]) importData(e.target.files[0]);
     e.target.value = '';
