@@ -317,20 +317,22 @@ tbody tr:hover .row-acts{opacity:1}
       <h2>Settings</h2>
       <button class="modal-x" onclick="closeModal('settingsModal')">×</button>
     </div>
-    <div class="frow">
-      <div class="fg">
-        <label>Currency</label>
-        <select class="fselect" id="setCurrency">
-          <option value="SGD">SGD</option><option value="USD">USD</option>
-          <option value="AUD">AUD</option><option value="GBP">GBP</option>
-          <option value="EUR">EUR</option><option value="MYR">MYR</option>
-          <option value="HKD">HKD</option><option value="JPY">JPY</option>
-        </select>
-      </div>
-      <div class="fg">
-        <label>Monthly take-home salary</label>
-        <input type="number" class="finput" id="setSalary" placeholder="0.00" step="0.01" min="0">
-      </div>
+    <div class="fg">
+      <label>Currency</label>
+      <select class="fselect" id="setCurrency">
+        <option value="SGD">SGD</option><option value="USD">USD</option>
+        <option value="AUD">AUD</option><option value="GBP">GBP</option>
+        <option value="EUR">EUR</option><option value="MYR">MYR</option>
+        <option value="HKD">HKD</option><option value="JPY">JPY</option>
+      </select>
+    </div>
+    <div class="fg">
+      <label>Gross salary (before CPF)</label>
+      <input type="number" class="finput" id="setGrossSalary" placeholder="0.00" step="0.01" min="0" oninput="updateTakeHome()">
+    </div>
+    <div class="fg">
+      <label>Take-home after CPF <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--label3)">(20% employee contribution)</span></label>
+      <div style="padding:10px 12px;background:var(--surface2);border:1.5px solid var(--sep);border-radius:var(--radius-sm);font-size:14px;color:var(--label3)" id="takeHomePreview">—</div>
     </div>
     <div class="fg">
       <label>Monthly savings goal</label>
@@ -350,7 +352,7 @@ tbody tr:hover .row-acts{opacity:1}
 // ── State ──
 const KEY = 'finance_v2';
 const DEF = {
-  settings: { currency: 'SGD', theme: 'dark', salary: 0, savingsGoal: 0 },
+  settings: { currency: 'SGD', theme: 'dark', grossSalary: 0, salary: 0, savingsGoal: 0 },
   savings: [],   // [{month:'YYYY-MM', balance:0}]
   bills: []      // [{id, name, amount}]
 };
@@ -677,15 +679,27 @@ function deleteBill(id) {
 }
 
 // ── Settings ──
+function updateTakeHome() {
+  const gross = parseFloat(document.getElementById('setGrossSalary').value) || 0;
+  const takeHome = gross * 0.8;
+  const cur = document.getElementById('setCurrency').value || data.settings.currency || 'SGD';
+  const formatted = gross > 0
+    ? new Intl.NumberFormat('en-US',{style:'currency',currency:cur,minimumFractionDigits:0,maximumFractionDigits:0}).format(takeHome)
+    : '—';
+  document.getElementById('takeHomePreview').textContent = formatted;
+  document.getElementById('takeHomePreview').style.color = gross > 0 ? 'var(--green)' : 'var(--label3)';
+}
 function openSettings() {
   document.getElementById('setCurrency').value = data.settings.currency||'SGD';
-  document.getElementById('setSalary').value = data.settings.salary||'';
+  document.getElementById('setGrossSalary').value = data.settings.grossSalary||'';
   document.getElementById('setGoal').value = data.settings.savingsGoal||'';
+  updateTakeHome();
   document.getElementById('settingsModal').classList.add('open');
 }
 function saveSettings() {
   data.settings.currency = document.getElementById('setCurrency').value;
-  data.settings.salary = parseFloat(document.getElementById('setSalary').value)||0;
+  data.settings.grossSalary = parseFloat(document.getElementById('setGrossSalary').value)||0;
+  data.settings.salary = Math.round(data.settings.grossSalary * 0.8 * 100) / 100;
   data.settings.savingsGoal = parseFloat(document.getElementById('setGoal').value)||0;
   save(); closeModal('settingsModal'); toast('Settings saved'); renderAll();
 }
