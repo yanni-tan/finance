@@ -174,10 +174,6 @@ tbody tr:hover .row-acts{opacity:1}
       <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="9"/></svg>
       History
     </button>
-    <button class="nav-btn" data-page="bills">
-      <svg class="nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="16" y2="17"/></svg>
-      Bills
-    </button>
   </nav>
   <div class="side-foot">
     <button class="side-action" id="logBtn">+ Log savings</button>
@@ -235,6 +231,23 @@ tbody tr:hover .row-acts{opacity:1}
         <div class="card-body" id="goalBody"></div>
       </div>
     </div>
+
+    <div class="grid2">
+      <div class="card">
+        <div class="card-hdr">
+          <h2>Monthly bills</h2>
+          <div class="card-hdr-right">
+            <span id="billTotal" style="font-size:13px;font-weight:700;color:var(--red)"></span>
+            <button class="row-btn" onclick="openBillModal()">+ Add</button>
+          </div>
+        </div>
+        <div class="card-body" id="billList"></div>
+      </div>
+      <div class="card">
+        <div class="card-hdr"><h2>Bill summary</h2></div>
+        <div class="card-body" id="billSummary"></div>
+      </div>
+    </div>
   </section>
 
   <!-- History -->
@@ -245,26 +258,6 @@ tbody tr:hover .row-acts{opacity:1}
     <div class="card">
       <div class="card-hdr"><h2>Monthly savings log</h2><span id="histCount" style="font-size:12px;color:var(--label3)"></span></div>
       <div id="histBody"></div>
-    </div>
-  </section>
-
-  <!-- Bills -->
-  <section class="page" id="page-bills">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:18px">
-      <button class="btn btn-primary" onclick="openBillModal()" style="flex:0">+ Add bill</button>
-    </div>
-    <div class="grid2">
-      <div class="card">
-        <div class="card-hdr">
-          <h2>Monthly bills</h2>
-          <div class="card-hdr-right"><span id="billTotal" style="font-size:13px;font-weight:700;color:var(--red)"></span></div>
-        </div>
-        <div class="card-body" id="billList"></div>
-      </div>
-      <div class="card">
-        <div class="card-hdr"><h2>Bill summary</h2></div>
-        <div class="card-body" id="billSummary"></div>
-      </div>
     </div>
   </section>
 </main>
@@ -700,8 +693,8 @@ function switchPage(page) {
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.getElementById('page-'+page).classList.add('active');
   document.querySelectorAll('.nav-btn').forEach(b=>b.classList.toggle('active', b.dataset.page===page));
-  document.getElementById('logBtn').textContent = page==='bills' ? '+ Add bill' : '+ Log savings';
-  document.getElementById('logBtn').onclick = page==='bills' ? openBillModal : openLog;
+  document.getElementById('logBtn').textContent = '+ Log savings';
+  document.getElementById('logBtn').onclick = openLog;
   document.getElementById('side').classList.remove('open');
   renderAll();
 }
