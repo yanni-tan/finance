@@ -314,6 +314,9 @@
         .btn-ghost { background: transparent; color: var(--label2); border: 1.5px solid var(--sep); }
 
         /* ── Spendable preview in modal ── */
+        .form-section { border: 1.5px solid var(--sep); border-radius: var(--radius-sm); padding: 16px 16px 8px; margin-bottom: 14px; background: var(--surface2); }
+        .form-section-title { font-size: 10px; font-weight: 700; color: var(--label3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 12px; }
+        .form-section .fg:last-child { margin-bottom: 8px; }
         .spendable-preview { display: flex; align-items: center; justify-content: space-between; padding: 16px 18px; background: var(--green-bg); border: 1px solid rgba(34,197,94,0.25); border-radius: var(--radius-sm); margin-top: 8px; }
         .spendable-preview.neg { background: var(--red-bg); border-color: rgba(239,68,68,0.25); }
         .sp-label { font-size: 12px; font-weight: 700; color: var(--label2); text-transform: uppercase; letter-spacing: 0.5px; }
@@ -425,11 +428,17 @@
                 </div>
                 <div class="kpi-card pink">
                     <div class="kpi-icon red">↓</div>
-                    <div class="kpi-label">Cards + investment</div>
-                    <div class="kpi-value" id="kpiOut">—</div>
-                    <div class="kpi-sub" id="kpiOutSub">Latest cycle</div>
+                    <div class="kpi-label">Investment</div>
+                    <div class="kpi-value" id="kpiInvestment">—</div>
+                    <div class="kpi-sub" id="kpiInvestmentSub">Latest cycle</div>
                 </div>
                 <div class="kpi-card peach">
+                    <div class="kpi-icon amber">💳</div>
+                    <div class="kpi-label">Card bills</div>
+                    <div class="kpi-value" id="kpiCards">—</div>
+                    <div class="kpi-sub" id="kpiCardsSub">Latest cycle</div>
+                </div>
+                <div class="kpi-card" style="background:var(--surface2);border:1.5px solid var(--sep)">
                     <div class="kpi-icon amber">◎</div>
                     <div class="kpi-label">Spendable</div>
                     <div class="kpi-value" id="kpiSpendable">—</div>
@@ -584,23 +593,27 @@
                 <label>Take-home salary</label>
                 <input type="number" class="finput" id="paySalary" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
             </div>
-            <div class="modal-divider">Deductions</div>
-            <div class="fg">
-                <label>Automated investment</label>
-                <input type="number" class="finput" id="payInvestment" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
+            <div class="form-section">
+                <div class="form-section-title">Investment</div>
+                <div class="fg">
+                    <label>Automated investment</label>
+                    <input type="number" class="finput" id="payInvestment" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
+                </div>
             </div>
-            <div class="modal-divider">Credit card bills</div>
-            <div class="fg">
-                <label id="payCardLabel0">Card 1</label>
-                <input type="number" class="finput" id="payCard0" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-            </div>
-            <div class="fg">
-                <label id="payCardLabel1">Card 2</label>
-                <input type="number" class="finput" id="payCard1" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
-            </div>
-            <div class="fg">
-                <label id="payCardLabel2">Card 3</label>
-                <input type="number" class="finput" id="payCard2" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
+            <div class="form-section">
+                <div class="form-section-title">Credit card bills</div>
+                <div class="fg">
+                    <label id="payCardLabel0">Card 1</label>
+                    <input type="number" class="finput" id="payCard0" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
+                </div>
+                <div class="fg">
+                    <label id="payCardLabel1">Card 2</label>
+                    <input type="number" class="finput" id="payCard1" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
+                </div>
+                <div class="fg">
+                    <label id="payCardLabel2">Card 3</label>
+                    <input type="number" class="finput" id="payCard2" placeholder="0.00" step="0.01" min="0" oninput="updateSpendablePreview()">
+                </div>
             </div>
             <div class="fg">
                 <label>Note (optional)</label>
@@ -855,17 +868,18 @@ function renderDashboard() {
     const cycle = latestCycle();
     if (cycle) {
         const spendable = cycleSpendable(cycle);
-        const out = cycleTotalOut(cycle);
         document.getElementById('kpiSalary').textContent = fmt(Number(cycle.salary || 0));
         document.getElementById('kpiSalarySub').textContent = fmtDate(cycle.date);
-        document.getElementById('kpiOut').textContent = fmt(out);
-        document.getElementById('kpiOutSub').textContent = fmtDate(cycle.date);
+        document.getElementById('kpiInvestment').textContent = fmt(Number(cycle.investment || 0));
+        document.getElementById('kpiInvestmentSub').textContent = fmtDate(cycle.date);
+        document.getElementById('kpiCards').textContent = fmt(cycleTotalCards(cycle));
+        document.getElementById('kpiCardsSub').textContent = fmtDate(cycle.date);
         document.getElementById('kpiSpendable').textContent = fmt(spendable);
         document.getElementById('kpiSpendableSub').textContent = spendable >= 0 ? 'After all deductions' : 'Over — cut spending';
         document.getElementById('dashCycleDate').textContent = fmtDate(cycle.date);
         document.getElementById('dashCycleBody').innerHTML = cycleFormulaHTML(cycle);
     } else {
-        ['kpiSalary','kpiOut','kpiSpendable'].forEach(id => document.getElementById(id).textContent = '—');
+        ['kpiSalary','kpiInvestment','kpiCards','kpiSpendable'].forEach(id => document.getElementById(id).textContent = '—');
         document.getElementById('dashCycleDate').textContent = 'Not logged yet';
         document.getElementById('dashCycleBody').innerHTML = emptyHTML('📅', 'No cycle logged', 'Log your first payday to see the breakdown.', `<button class="btn btn-primary" onclick="openPaydayModal()" style="flex:0;display:inline-block;margin-top:8px">+ Log payday</button>`);
     }
